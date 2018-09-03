@@ -11,9 +11,6 @@ namespace BogusDataGenerator.Test
         public DateTime StartDate { get; set; }
         public int? Administrator { get; set; }
         public ConsoleColor ConsoleColor { get; set; }
-
-
-
         // public virtual ICollection<Course> Courses { get; set; } // Stackoverflow problem :(
     }
 }

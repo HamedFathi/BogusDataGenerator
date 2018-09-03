@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BogusDataGenerator
 {
@@ -41,6 +42,14 @@ namespace BogusDataGenerator
             }
             return newResult;
         }
+
+        internal static string GetFullName(this Type type)
+        {
+            var name = type.ToString().Replace('[', '<').Replace(']', '>');
+            name = Regex.Replace(name, @"`[0-9][0-9]*", "");
+            return name;
+        }
+
         private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 1, params Type[] predefinedTypes)
         {
             int level = prevLevel;
