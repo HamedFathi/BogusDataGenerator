@@ -11,6 +11,36 @@ namespace BogusDataGenerator
         {
             return GetInnerTypesInfo(type, 1, predefinedTypes);
         }
+
+        public static List<InnerTypeResult> SortResult(this List<InnerTypeResult> innerTypeResults, SortType sortType = SortType.Ascending)
+        {
+            List<InnerTypeResult> sorted = null;
+            if (sortType == SortType.Ascending)
+            {
+                sorted = innerTypeResults.OrderBy(x => x.Level).ToList();
+            }
+            else
+            {
+                sorted = innerTypeResults.OrderByDescending(x => x.Level).ToList();
+            }
+            return sorted;
+        }
+
+
+        public static List<InnerTypeResult> DistinctResult(this List<InnerTypeResult> innerTypeResults, RemovingPriority removingPriority = RemovingPriority.FromBottom)
+        {
+            var sorted = innerTypeResults.SortResult(removingPriority == RemovingPriority.FromBottom ? SortType.Descending : SortType.Ascending);
+            var newResult = new List<InnerTypeResult>();
+            foreach (var result in sorted)
+            {
+                var currentResult = newResult.Select(x => x.Type.FullName).ToList();
+                if (!currentResult.Contains(result.Type.FullName))
+                {
+                    newResult.Add(result);
+                }
+            }
+            return newResult;
+        }
         private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 1, params Type[] predefinedTypes)
         {
             int level = prevLevel;

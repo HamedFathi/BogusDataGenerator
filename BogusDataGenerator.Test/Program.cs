@@ -6,7 +6,7 @@ namespace BogusDataGenerator.Test
     {
         static void Main(string[] args)
         {
-            var result = typeof(Course).GetInnerTypes();
+            var result = typeof(Course).GetInnerTypes().DistinctResult(RemovingPriority.FromBottom);
             Console.ReadKey();
         }
     }
