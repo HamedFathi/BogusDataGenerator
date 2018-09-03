@@ -10,7 +10,7 @@ namespace BogusDataGenerator.Models
         public TypeStatus Status { get; set; }
         public string Name => Type.ToString();
         public string FullName => Type.FullName;
-        public string CorrectedFullName
+        public string TypeName
         {
             get
             {

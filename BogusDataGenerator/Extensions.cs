@@ -44,7 +44,9 @@ namespace BogusDataGenerator
         }
         internal static string GetFullName(this Type type)
         {
-            var name = type.ToString().Replace('[', '<').Replace(']', '>');
+            var name = type.ToString()
+                           .Replace('[', '<')
+                           .Replace(']', '>');
             name = Regex.Replace(name, @"`[0-9][0-9]*", "");
             return name;
         }
