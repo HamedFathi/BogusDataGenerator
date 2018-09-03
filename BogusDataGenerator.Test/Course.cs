@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BogusDataGenerator.Test
+﻿namespace BogusDataGenerator.Test
 {
     public class Course
     {
-        public Dictionary<int, Guid> Credits1 { get; set; }
-        public IList<decimal> Credits2 { get; set; }
-
-        public string[][][] Credits { get; set; }
-
-        public Tuple<Dictionary<int, Guid>, decimal, string> Credits3 { get; set; }
-
+        public int CourseID { get; set; }
+        public string Title { get; set; }
+        public int Credits { get; set; }
         public int DepartmentID { get; set; }
         public virtual Department Department { get; set; }
     }

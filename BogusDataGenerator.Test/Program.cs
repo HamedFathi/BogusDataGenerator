@@ -7,7 +7,7 @@ namespace BogusDataGenerator.Test
     {
         static void Main(string[] args)
         {
-            var result = typeof(Course).GetInnerTypes().Distinct(RemovingPriority.FromBottomLevel);
+            var result = typeof(Course).GetInnerTypes().Distinct(RemovingPriority.FromTopLevel);
             Console.ReadKey();
         }
     }
