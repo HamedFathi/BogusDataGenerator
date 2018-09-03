@@ -1,6 +1,7 @@
-﻿using System;
+﻿using BogusDataGenerator.Enums;
+using System;
 
-namespace BogusDataGenerator
+namespace BogusDataGenerator.Models
 {
     public class InnerTypeResult
     {

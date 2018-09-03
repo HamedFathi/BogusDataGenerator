@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BogusDataGenerator.Enums;
+using BogusDataGenerator.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,8 +14,7 @@ namespace BogusDataGenerator
         {
             return GetInnerTypesInfo(type, 1, predefinedTypes);
         }
-
-        public static List<InnerTypeResult> SortResult(this List<InnerTypeResult> innerTypeResults, SortType sortType = SortType.Ascending)
+        public static List<InnerTypeResult> Sort(this List<InnerTypeResult> innerTypeResults, SortType sortType)
         {
             List<InnerTypeResult> sorted = null;
             if (sortType == SortType.Ascending)
@@ -26,11 +27,10 @@ namespace BogusDataGenerator
             }
             return sorted;
         }
-
-
-        public static List<InnerTypeResult> DistinctResult(this List<InnerTypeResult> innerTypeResults, RemovingPriority removingPriority = RemovingPriority.FromBottom)
+        public static List<InnerTypeResult> Distinct(this List<InnerTypeResult> innerTypeResults, RemovingPriority removingPriority)
         {
-            var sorted = innerTypeResults.SortResult(removingPriority == RemovingPriority.FromBottom ? SortType.Descending : SortType.Ascending);
+            var sortType = removingPriority == RemovingPriority.FromBottomLevel ? SortType.Descending : SortType.Ascending;
+            var sorted = innerTypeResults.Sort(sortType);
             var newResult = new List<InnerTypeResult>();
             foreach (var result in sorted)
             {
@@ -42,7 +42,6 @@ namespace BogusDataGenerator
             }
             return newResult;
         }
-
         internal static string GetFullName(this Type type)
         {
             var name = type.ToString().Replace('[', '<').Replace(']', '>');
