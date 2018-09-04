@@ -8,6 +8,8 @@ namespace BogusDataGenerator.Models
         public int Level { get; set; }
         public Type Type { get; set; }
         public TypeStatus Status { get; set; }
+        public string Name { get; set; }
+
         public string TypeName
         {
             get
@@ -23,10 +25,18 @@ namespace BogusDataGenerator.Models
             get
             {
                 var friendlyTypeName = "";
-                if (Type.ToString().StartsWith("System.Nullable`1["))
+                var isNullable = Type.ToString().StartsWith("System.Nullable`1[");
+                var isArray = Type.ToString().EndsWith("[]");
+                if (isNullable)
                 {
                     var newName = Type.ToString().Replace("System.Nullable`1[", "").Replace("]", "");
                     friendlyTypeName = newName.GetFriendlyTypeName() + "?";
+                }
+                else if (isArray)
+                {
+                    var newName = Type.ToString().Replace("[]", "");
+                    var count = Type.ToString().CountOfSubstring("[]");
+                    friendlyTypeName = newName.GetFriendlyTypeName() + "[]".Repeat(count);
                 }
                 else
                 {
