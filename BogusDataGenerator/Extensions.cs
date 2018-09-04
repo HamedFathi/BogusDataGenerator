@@ -1,8 +1,11 @@
 ﻿using BogusDataGenerator.Enums;
 using BogusDataGenerator.Models;
+using Microsoft.CSharp;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -29,7 +32,7 @@ namespace BogusDataGenerator
         }
         public static List<InnerTypeResult> Distinct(this List<InnerTypeResult> innerTypeResults, RemovingPriority removingPriority)
         {
-            var sortType = removingPriority == RemovingPriority.FromBottomLevel ? SortType.Descending : SortType.Ascending;
+            var sortType = removingPriority == RemovingPriority.FromLowerLevel ? SortType.Descending : SortType.Ascending;
             var sorted = innerTypeResults.Sort(sortType);
             var newResult = new List<InnerTypeResult>();
             foreach (var result in sorted)
@@ -49,6 +52,50 @@ namespace BogusDataGenerator
                            .Replace(']', '>');
             name = Regex.Replace(name, @"`[0-9][0-9]*", "");
             return name;
+        }
+
+        internal static string GetFriendlyTypeName(this Type type)
+        {
+            var mscorlib = Assembly.GetAssembly(typeof(int));
+            using (var provider = new CSharpCodeProvider())
+            {
+                foreach (var definedType in mscorlib.DefinedTypes)
+                {
+                    if (string.Equals(definedType.Namespace, "System"))
+                    {
+                        var typeRef = new CodeTypeReference(definedType);
+                        var csTypeName = provider.GetTypeOutput(typeRef);
+                        // Ignore qualified types.
+                        if (csTypeName.IndexOf('.') == -1 && definedType.FullName== type.ToString())
+                        {
+                            return csTypeName.ToString();
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        internal static string GetFriendlyTypeName(this string typeName)
+        {
+            var mscorlib = Assembly.GetAssembly(typeof(int));
+            using (var provider = new CSharpCodeProvider())
+            {
+                foreach (var definedType in mscorlib.DefinedTypes)
+                {
+                    if (string.Equals(definedType.Namespace, "System"))
+                    {
+                        var typeRef = new CodeTypeReference(definedType);
+                        var csTypeName = provider.GetTypeOutput(typeRef);
+                        // Ignore qualified types.
+                        if (csTypeName.IndexOf('.') == -1 && definedType.FullName == typeName)
+                        {
+                            return csTypeName.ToString();
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 1, params Type[] predefinedTypes)

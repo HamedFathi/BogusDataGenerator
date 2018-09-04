@@ -8,8 +8,7 @@ namespace BogusDataGenerator.Test
     {
         static void Main(string[] args)
         {
-            var result = typeof(Course).GetInnerTypes().Distinct(RemovingPriority.FromTopLevel);
-
+            var result = typeof(Course).GetInnerTypes().Distinct(RemovingPriority.FromUpperLevel);
             var testUsers = new Faker<Course>()
                 .RuleFor(x => x.CourseID, (x, y) => x.UniqueIndex);
 

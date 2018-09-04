@@ -2,7 +2,7 @@
 {
     public enum RemovingPriority
     {
-        FromTopLevel,
-        FromBottomLevel
+        FromUpperLevel,
+        FromLowerLevel
     }
 }
