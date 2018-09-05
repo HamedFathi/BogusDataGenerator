@@ -5,6 +5,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -283,10 +284,39 @@ namespace BogusDataGenerator
         {
             return type.FullName.StartsWith("System.Tuple`", StringComparison.Ordinal);
         }
-        private static StringBuilder AppendLine(this StringBuilder sb, string value, int tab)
+        internal static StringBuilder AppendLine(this StringBuilder sb, string value, int tab)
         {
             return sb.AppendLine(new string('\t', tab) + value);
         }
+
+        internal static string GetName<TSource, TField>(this Expression<Func<TSource, TField>> field)
+        {
+            if (object.Equals(field, null))
+            {
+                throw new NullReferenceException("Field is required");
+            }
+
+            MemberExpression expr = null;
+
+            if (field.Body is MemberExpression)
+            {
+                expr = (MemberExpression)field.Body;
+            }
+            else if (field.Body is UnaryExpression)
+            {
+                expr = (MemberExpression)((UnaryExpression)field.Body).Operand;
+            }
+            else
+            {
+                const string Format = "Expression '{0}' not supported.";
+                string message = string.Format(Format, field);
+
+                throw new ArgumentException(message, "Field");
+            }
+
+            return expr.Member.Name;
+        }
+
         private static bool IsNullableValueType(this Type type)
         {
             return Nullable.GetUnderlyingType(type) != null;
