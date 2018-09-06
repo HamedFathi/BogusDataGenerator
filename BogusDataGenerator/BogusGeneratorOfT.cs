@@ -116,10 +116,12 @@ namespace BogusDataGenerator
 
 
 
-        private string BogusCreator(Type type)
+        private string BogusCreator(Type type, string variableName = null, List<string> variables = null)
         {
             var sb = new StringBuilder();
-            var name = type.Name.Camelize();
+            if (variables == null)
+                variables = new List<string>();
+            var name = variableName ?? type.Name.Camelize();
             var className = type.Name;
             sb.AppendLine($"var {name} = new Faker<{className}>()");
             if (_bogusData.IsStrictMode)
@@ -128,17 +130,53 @@ namespace BogusDataGenerator
                 sb.AppendLine(".StrictMode(false)", 1);
 
             var processed = new List<string>();
-            var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null).ToList();
+            var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null && x.Parent == type.FullName).ToList();
             foreach (var innerType in innerTypes)
             {
 
                 if (innerType.Status == TypeStatus.Class)
                 {
-                    var variableName = innerType.Name.Camelize();
-                    var anotherFaker = BogusCreator(innerType.Type) + new string('\t', 1) + ";" + Environment.NewLine;
+                    var varName = innerType.Name.Camelize();
+                    variables.Add(varName);
+                    var anotherFaker = BogusCreator(innerType.Type, varName, variables) + new string('\t', 1) + ";" + Environment.NewLine;
                     sb.Prepend(anotherFaker);
-                    sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {variableName}.Generate(3).ToList())",1);
+                    sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {varName}.Generate())", 1);
+                }
 
+                if (innerType.Status == TypeStatus.Enumerable || innerType.Status == TypeStatus.Collection)
+                {
+                    var varName = innerType.Name.Camelize();
+                    var singularVariableName = varName.Singularize(false);
+                    if (variables.Contains(singularVariableName))
+                    {
+                        sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {singularVariableName}.Generate(100).ToList())", 1);
+                    }
+                    else
+                    {
+                        variables.Add(varName);
+                        var itemType = innerType.Type.GetGenericArguments()[0];
+                        var anotherFaker = BogusCreator(itemType, varName, variables) + new string('\t', 1) + ";" + Environment.NewLine;
+                        sb.Prepend(anotherFaker);
+
+                        sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {varName}.Generate(100).ToList())", 1);
+                    }
+                }
+                if (innerType.Status == TypeStatus.Array)
+                {
+                    var varName = innerType.Name.Camelize();
+                    var singularVariableName = varName.Singularize(false);
+                    if (variables.Contains(singularVariableName))
+                    {
+                        sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {singularVariableName}.Generate(100).ToArray())", 1);
+                    }
+                    else
+                    {
+                        variables.Add(varName);
+                        var elementType = innerType.Type.GetElementType();
+                        var anotherFaker = BogusCreator(elementType, varName, variables) + new string('\t', 1) + ";" + Environment.NewLine;
+                        sb.Prepend(anotherFaker);
+                        sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, (f) => {varName}.Generate(100).ToArray())", 1);
+                    }
                 }
                 else
                 {
@@ -148,6 +186,17 @@ namespace BogusDataGenerator
                         {
                             sb.AppendLine($".RuleFor({propRule.Item3}, {propRule.Item4})", 1);
                             processed.Add(innerType.UniqueId);
+                        }
+                    }
+                    foreach (var predefinedRules in _bogusData.PredefinedRules)
+                    {
+                        foreach (var propRule in predefinedRules.PropertyRules)
+                        {
+                            if (innerType.Name == propRule.Item2 && !processed.Contains(innerType.UniqueId))
+                            {
+                                sb.AppendLine($".RuleFor({propRule.Item3}, {propRule.Item4})", 1);
+                                processed.Add(innerType.UniqueId);
+                            }
                         }
                     }
                     foreach (var conditionalPropRule in _bogusData.ConditionalPropertyRules)

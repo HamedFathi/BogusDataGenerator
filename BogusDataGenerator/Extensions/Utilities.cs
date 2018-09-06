@@ -143,20 +143,20 @@ namespace BogusDataGenerator.Extensions
 
                         Type valueType = type.GetGenericArguments()[1];
                         typeList.Add(new InnerTypeResult() { Type = valueType, Level = level, Name = propertyName, Status = TypeStatus.DictionaryValue });
-                        typeList.AddRange(GetInnerTypesInfo(keyType, level, propertyName, predefinedTypes));
+                        typeList.AddRange(GetInnerTypesInfo(valueType, level, propertyName, predefinedTypes));
                     }
                     if (type.IsEnumerable() && !type.IsDictionary())
                     {
                         level = prevLevel + 1;
                         Type itemType = type.GetGenericArguments()[0];
-                        typeList.Add(new InnerTypeResult() { Type = type, Level = level, Name = propertyName, Status = TypeStatus.Enumerable });
+                        typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Enumerable });
                         typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
                     }
                     if (type.IsCollection() && !type.IsDictionary())
                     {
                         level = prevLevel + 1;
                         Type itemType = type.GetGenericArguments()[0];
-                        typeList.Add(new InnerTypeResult() { Type = type, Level = level, Name = propertyName, Status = TypeStatus.Collection });
+                        typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Collection });
                         typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
                     }
                     if (type.IsTuple())
@@ -176,7 +176,7 @@ namespace BogusDataGenerator.Extensions
                     {
                         var elementType = type.GetElementType();
                         level = prevLevel + 1;
-                        typeList.Add(new InnerTypeResult() { Type = elementType, Level = level, Name = propertyName, Status = TypeStatus.ArrayElement });
+                        typeList.Add(new InnerTypeResult() { Type = elementType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.ArrayElement });
                         typeList.AddRange(GetInnerTypesInfo(elementType, level, propertyName, predefinedTypes));
                     }
                     if (type.IsInterface) // I am not sure!
