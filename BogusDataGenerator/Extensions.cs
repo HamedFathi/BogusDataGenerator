@@ -190,7 +190,8 @@ namespace BogusDataGenerator
                             Type = x.PropertyType,
                             Level = level,
                             Status = GetTypeStatus(x.PropertyType),
-                            Name = x.Name
+                            Name = x.Name,
+                            Parent = type.ToString()
                         })
                             .ToList();
                         typeList.AddRange(result);
@@ -284,9 +285,23 @@ namespace BogusDataGenerator
         {
             return type.FullName.StartsWith("System.Tuple`", StringComparison.Ordinal);
         }
-        internal static StringBuilder AppendLine(this StringBuilder sb, string value, int tab)
+        internal static StringBuilder AppendLine(this StringBuilder sb, string content, int tab)
         {
-            return sb.AppendLine(new string('\t', tab) + value);
+            return sb.AppendLine(new string('\t', tab) + content);
+        }
+        internal static StringBuilder Append(this StringBuilder sb, string content, int tab)
+        {
+            return sb.Append(new string('\t', tab) + content);
+        }
+
+        internal static StringBuilder Prepend(this StringBuilder sb, string content)
+        {
+            return sb.Insert(0, content);
+        }
+
+        internal static StringBuilder Prepend(this StringBuilder sb, string content, int tab)
+        {
+            return sb.Insert(0, new string('\t', tab) + content);
         }
 
         internal static string GetName<TSource, TField>(this Expression<Func<TSource, TField>> field)
@@ -320,6 +335,32 @@ namespace BogusDataGenerator
         private static bool IsNullableValueType(this Type type)
         {
             return Nullable.GetUnderlyingType(type) != null;
+        }
+
+        internal static bool ContainsOneOf(this string[] array, string[] items)
+        {
+            if (array == null || items == null)
+            {
+                return true;
+            }
+            if (array.Length == 0 || items.Length == 0)
+            {
+                return true;
+            }
+            else
+            {
+                foreach (var arr in array)
+                {
+                    foreach (var item in items)
+                    {
+                        if (arr == item)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
         }
     }
 }

@@ -5,10 +5,16 @@ namespace BogusDataGenerator.Models
 {
     public class InnerTypeResult
     {
+        public string UniqueId
+        {
+            get { return $"{Level}-{Name}-{Type.ToString()}"; }
+        }
+
         public int Level { get; set; }
         public Type Type { get; set; }
         public TypeStatus Status { get; set; }
         public string Name { get; set; }
+        public string Parent { get; set; }
 
         public string TypeName
         {

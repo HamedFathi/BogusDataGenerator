@@ -1,6 +1,8 @@
 ﻿using Bogus;
 using BogusDataGenerator.Enums;
+using BogusDataGenerator.Models;
 using System;
+using System.Collections.Generic;
 
 namespace BogusDataGenerator.Test
 {
@@ -9,23 +11,23 @@ namespace BogusDataGenerator.Test
         static void Main(string[] args)
         {
             var result = typeof(Course).GetInnerTypes();
-            var testUsers = new Faker<Course>()
-                .RuleFor(x => x.CourseID, (x, y) => x.UniqueIndex);
+            var testUsers = new Faker<Department>();
 
             var obj = testUsers.Generate(5);
 
 
             var r1 = new BogusGenerator()
-                .ConditionalPropertyRuleFor(x => x.Contains("Credit"), y => y.Address.BuildingNumber(), "kr")
-                .TypeRuleFor<decimal>(x => x.IndexVariable)
+                .ConditionalPropertyRuleFor(x => x.Contains("Credit"), y => y.Address.BuildingNumber(), "kr","en")
+                .TypeRuleFor<string>(x => x.IndexVariable.ToString())
                 .Store()
                 ;
 
             var r = new BogusGenerator<Course>()
                   .StrictMode()
                   .PropertyRuleFor(x => x.CourseID, (u, v) => u.UniqueIndex)
-                  .ConditionalPropertyRuleFor(g => g.Contains("ID"), (i, j) => i.Locale)
-                  .TypeRuleFor(x => x.Locale)
+                  //.ConditionalPropertyRuleFor(g => g.Contains("Credit"), (i, j) => i.Locale)
+                  //.TypeRuleFor(x => x.Locale)
+                  .TypeRuleFor(x => x.IndexGlobal)
                   .AddText("111", ExtraTextType.Before)
                   .AddText("222", ExtraTextType.After)
                   .AddText("333", ExtraTextType.Before)

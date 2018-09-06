@@ -14,14 +14,16 @@ namespace BogusDataGenerator
         {
             _bogusData = new BogusData();
         }
-        public BogusGenerator TypeRuleFor<U>(Expression<Func<Faker, U>> setter, string locale = null)
+        public BogusGenerator TypeRuleFor<U>(Expression<Func<Faker, U>> setter, params string[] locales)
         {
-            _bogusData.TypeRules.Add(new Tuple<string, string, string>(typeof(U).ToString(), setter.ToString(), locale));
+            var setterExp = ExpressionToString.ExpressionStringBuilder.ToString(setter);
+            _bogusData.TypeRules.Add(new Tuple<string, string, string[]>(typeof(U).ToString(), setterExp, locales));
             return this;
         }
-        public BogusGenerator ConditionalPropertyRuleFor<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, string locale = null)
+        public BogusGenerator ConditionalPropertyRuleFor<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, params string[] locales)
         {
-            _bogusData.ConditionalPropertyRules.Add(new Tuple<string, Func<string, bool>, string, string, string>(null, condition, null, setter.ToString(), locale));
+            var setterExp = ExpressionToString.ExpressionStringBuilder.ToString(setter);
+            _bogusData.ConditionalPropertyRules.Add(new Tuple<string, Func<string, bool>, string, string, string[]>(null, condition, null, setterExp, locales));
 
             return this;
         }
