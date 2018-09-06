@@ -23,29 +23,42 @@ namespace BogusDataGenerator
         public BogusGenerator<T> PropertyRuleFor<TProperty>(Expression<Func<T, TProperty>> property,
             Expression<Func<Faker, T, TProperty>> setter)
         {
-
-            var propExp = property.ToExpressionString();
-            var setterExp = setter.ToExpressionString();
-            _bogusData.PropertyRules.Add(new Tuple<string, string, string, string>(typeof(T).ToString(), property.GetName(), propExp, setterExp));
+            _bogusData.PropertyRules.Add(new PropertyRule()
+            {
+                Name = property.GetName(),
+                TypeName = typeof(T).ToString(),
+                PropertyExpression = property.ToExpressionString(),
+                SetterExpression = setter.ToExpressionString()
+            });
             return this;
         }
 
         public BogusGenerator<T> TypeRuleFor<U>(Expression<Func<Faker, U>> setter)
         {
-            var setterExp = setter.ToExpressionString();
-            _bogusData.TypeRules.Add(new Tuple<string, string, string[]>(typeof(U).ToString(), setterExp, null));
+            _bogusData.TypeRules.Add(new TypeRule
+            {
+                TypeName = typeof(U).ToString(),
+                SetterExpression = setter.ToExpressionString(),
+                Locales = null
+            });
             return this;
         }
         public BogusGenerator<T> ConditionalPropertyRuleFor<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter)
         {
-            var setterExp = setter.ToExpressionString();
             var props = typeof(T).GetProperties().Select(x => x.Name).ToList();
             foreach (var prop in props)
             {
                 var status = condition(prop);
                 if (status)
                 {
-                    _bogusData.ConditionalPropertyRules.Add(new Tuple<string, Func<string, bool>, string, string, string[]>(typeof(T).ToString(), condition, $"(z) => {prop.ToString()}", setterExp, null));
+                    _bogusData.ConditionalPropertyRules.Add(new ConditionalPropertyRule
+                    {
+                        TypeName = typeof(T).ToString(),
+                        PropertyExpression = $"(z) => {prop.ToString()}",
+                        SetterExpression = setter.ToExpressionString(),
+                        Locales = null,
+                        Condition = condition
+                    });
                 }
             }
             return this;
@@ -182,9 +195,9 @@ namespace BogusDataGenerator
                 {
                     foreach (var propRule in _bogusData.PropertyRules)
                     {
-                        if (innerType.Name == propRule.Item2 && !processed.Contains(innerType.UniqueId))
+                        if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
                         {
-                            sb.AppendLine($".RuleFor({propRule.Item3}, {propRule.Item4})", 1);
+                            sb.AppendLine($".RuleFor({propRule.PropertyExpression}, {propRule.SetterExpression})", 1);
                             processed.Add(innerType.UniqueId);
                         }
                     }
@@ -192,19 +205,19 @@ namespace BogusDataGenerator
                     {
                         foreach (var propRule in predefinedRules.PropertyRules)
                         {
-                            if (innerType.Name == propRule.Item2 && !processed.Contains(innerType.UniqueId))
+                            if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
                             {
-                                sb.AppendLine($".RuleFor({propRule.Item3}, {propRule.Item4})", 1);
+                                sb.AppendLine($".RuleFor({propRule.PropertyExpression}, {propRule.SetterExpression})", 1);
                                 processed.Add(innerType.UniqueId);
                             }
                         }
                     }
                     foreach (var conditionalPropRule in _bogusData.ConditionalPropertyRules)
                     {
-                        var status = conditionalPropRule.Item2(innerType.Name);
-                        if (status && !processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(conditionalPropRule.Item5))
+                        var status = conditionalPropRule.Condition(innerType.Name);
+                        if (status && !processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(conditionalPropRule.Locales))
                         {
-                            sb.AppendLine($".RuleFor({conditionalPropRule.Item3}, {conditionalPropRule.Item4})", 1);
+                            sb.AppendLine($".RuleFor({conditionalPropRule.PropertyExpression}, {conditionalPropRule.SetterExpression})", 1);
                             processed.Add(innerType.UniqueId);
                         }
                     }
@@ -212,24 +225,24 @@ namespace BogusDataGenerator
                     {
                         foreach (var conditionalPropRule in predefinedRules.ConditionalPropertyRules)
                         {
-                            var status = conditionalPropRule.Item2(innerType.Name);
-                            if (status && !processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(conditionalPropRule.Item5))
+                            var status = conditionalPropRule.Condition(innerType.Name);
+                            if (status && !processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(conditionalPropRule.Locales))
                             {
-                                var prop = conditionalPropRule.Item3 == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.Item3;
+                                var prop = conditionalPropRule.PropertyExpression == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpression;
 
 
-                                sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.Item4})", 1);
+                                sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.SetterExpression})", 1);
                                 processed.Add(innerType.UniqueId);
                             }
                         }
                     }
                     foreach (var typeRule in _bogusData.TypeRules)
                     {
-                        if (!processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(typeRule.Item3))
+                        if (!processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(typeRule.Locales))
                         {
-                            if (typeRule.Item1 == innerType.TypeName)
+                            if (typeRule.TypeName == innerType.TypeName)
                             {
-                                sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, {typeRule.Item2})", 1);
+                                sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, {typeRule.SetterExpression})", 1);
                                 processed.Add(innerType.UniqueId);
                             }
                         }
@@ -238,23 +251,18 @@ namespace BogusDataGenerator
                     {
                         foreach (var typeRule in predefinedRules.TypeRules)
                         {
-                            if (!processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(typeRule.Item3))
+                            if (!processed.Contains(innerType.UniqueId) && _bogusData.Locales.ContainsOneOf(typeRule.Locales))
                             {
-                                if (typeRule.Item1 == innerType.TypeName)
+                                if (typeRule.TypeName == innerType.TypeName)
                                 {
-                                    sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, {typeRule.Item2})", 1);
+                                    sb.AppendLine($".RuleFor((z) => z.{innerType.Name}, {typeRule.SetterExpression})", 1);
                                     processed.Add(innerType.UniqueId);
                                 }
                             }
                         }
                     }
                 }
-
-
-
-
             }
-
             return sb.ToString();
         }
 
