@@ -2,6 +2,7 @@
 using BogusDataGenerator.Enums;
 using BogusDataGenerator.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace BogusDataGenerator.Test
@@ -10,7 +11,9 @@ namespace BogusDataGenerator.Test
     {
         static void Main(string[] args)
         {
-            var result = typeof(Course).GetInnerTypes();
+            var result = typeof(Department).GetInnerTypes();
+
+            var result24 = typeof(List<Department>).GetInnerTypes();
             var departmentss = new Faker<Department>()
                 .StrictMode(true)
                 .RuleFor((z) => z.DepartmentID, (x) => x.IndexGlobal)

@@ -16,7 +16,18 @@ namespace BogusDataGenerator.Extensions
     {
         public static List<InnerTypeResult> GetInnerTypes(this Type type, params Type[] predefinedTypes)
         {
-            return GetInnerTypesInfo(type, 1, "", predefinedTypes);
+            var result = GetInnerTypesInfo(type, 0, "", predefinedTypes);
+            //if (!type.IsClassOnly())
+            //{
+            //    var newResult = new List<InnerTypeResult>();
+            //    foreach (var item in result)
+            //    {
+            //        item.Level -= 1;
+            //        newResult.Add(item);
+            //    }
+            //    return newResult;
+            //}
+            return result;
         }
         public static List<InnerTypeResult> Sort(this List<InnerTypeResult> innerTypeResults, SortType sortType)
         {
@@ -119,7 +130,7 @@ namespace BogusDataGenerator.Extensions
             }
             return count;
         }
-        private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 1, string propertyName = "", params Type[] predefinedTypes)
+        private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 0, string propertyName = "", params Type[] predefinedTypes)
         {
             int level = prevLevel;
             var typeList = new List<InnerTypeResult>();
@@ -145,20 +156,14 @@ namespace BogusDataGenerator.Extensions
                         typeList.Add(new InnerTypeResult() { Type = valueType, Level = level, Name = propertyName, Status = TypeStatus.DictionaryValue });
                         typeList.AddRange(GetInnerTypesInfo(valueType, level, propertyName, predefinedTypes));
                     }
-                    if (type.IsEnumerable() && !type.IsDictionary())
+                    if ((type.IsEnumerable() || type.IsCollection()) && !type.IsDictionary())
                     {
                         level = prevLevel + 1;
                         Type itemType = type.GetGenericArguments()[0];
+                        propertyName = string.IsNullOrEmpty(propertyName) ? itemType.Name : propertyName;
                         typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Enumerable });
                         typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
-                    }
-                    if (type.IsCollection() && !type.IsDictionary())
-                    {
-                        level = prevLevel + 1;
-                        Type itemType = type.GetGenericArguments()[0];
-                        typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Collection });
-                        typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
-                    }
+                    }                   
                     if (type.IsTuple())
                     {
                         level = prevLevel + 1;
@@ -176,6 +181,7 @@ namespace BogusDataGenerator.Extensions
                     {
                         var elementType = type.GetElementType();
                         level = prevLevel + 1;
+                        propertyName = string.IsNullOrEmpty(propertyName) ? elementType.Name : propertyName;
                         typeList.Add(new InnerTypeResult() { Type = elementType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.ArrayElement });
                         typeList.AddRange(GetInnerTypesInfo(elementType, level, propertyName, predefinedTypes));
                     }
@@ -185,6 +191,7 @@ namespace BogusDataGenerator.Extensions
                     }
                     if (type.IsClassOnly())
                     {
+                        level = prevLevel + 1;
                         var result = type.GetProperties().Select(x => new InnerTypeResult()
                         {
                             Type = x.PropertyType,
