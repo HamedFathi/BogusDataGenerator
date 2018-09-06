@@ -1,8 +1,7 @@
 ﻿using Bogus;
 using BogusDataGenerator.Enums;
-using BogusDataGenerator.Models;
+using BogusDataGenerator.Extensions;
 using System;
-using System.Collections.Generic;
 
 namespace BogusDataGenerator.Test
 {

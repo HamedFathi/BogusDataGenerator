@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BogusDataGenerator
+namespace BogusDataGenerator.Extensions
 {
-    public static class Extensions
+    public static class Utilities
     {
         public static List<InnerTypeResult> GetInnerTypes(this Type type, params Type[] predefinedTypes)
         {
@@ -336,7 +336,10 @@ namespace BogusDataGenerator
         {
             return Nullable.GetUnderlyingType(type) != null;
         }
-
+        internal static string ToExpressionString(this Expression expression, bool trimLongArgumentList = false)
+        {
+            return ExpressionStringBuilder.ToString(expression, trimLongArgumentList);
+        }
         internal static bool ContainsOneOf(this string[] array, string[] items)
         {
             if (array == null || items == null)

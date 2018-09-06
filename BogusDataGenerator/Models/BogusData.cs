@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BogusDataGenerator
+namespace BogusDataGenerator.Models
 {
     public class BogusData
     {

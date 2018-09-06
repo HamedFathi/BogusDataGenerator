@@ -1,5 +1,6 @@
 ﻿using Bogus;
 using BogusDataGenerator.Enums;
+using BogusDataGenerator.Extensions;
 using BogusDataGenerator.Models;
 using Humanizer;
 using System;
@@ -23,21 +24,21 @@ namespace BogusDataGenerator
             Expression<Func<Faker, T, TProperty>> setter)
         {
 
-            var propExp = ExpressionToString.ExpressionStringBuilder.ToString(property);
-            var setterExp = ExpressionToString.ExpressionStringBuilder.ToString(setter);
+            var propExp = property.ToExpressionString();
+            var setterExp = setter.ToExpressionString();
             _bogusData.PropertyRules.Add(new Tuple<string, string, string, string>(typeof(T).ToString(), property.GetName(), propExp, setterExp));
             return this;
         }
 
         public BogusGenerator<T> TypeRuleFor<U>(Expression<Func<Faker, U>> setter)
         {
-            var setterExp = ExpressionToString.ExpressionStringBuilder.ToString(setter);
+            var setterExp = setter.ToExpressionString();
             _bogusData.TypeRules.Add(new Tuple<string, string, string[]>(typeof(U).ToString(), setterExp, null));
             return this;
         }
         public BogusGenerator<T> ConditionalPropertyRuleFor<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter)
         {
-            var setterExp = ExpressionToString.ExpressionStringBuilder.ToString(setter);
+            var setterExp = setter.ToExpressionString();
             var props = typeof(T).GetProperties().Select(x => x.Name).ToList();
             foreach (var prop in props)
             {

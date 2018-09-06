@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 
 // ReSharper disable CheckNamespace
-namespace ExpressionToString
+namespace BogusDataGenerator.Extensions
 {
-    class ExpressionStringBuilder : ExpressionVisitor
+    internal class ExpressionStringBuilder : ExpressionVisitor
     {
         // ReSharper disable InconsistentNaming
         private readonly StringBuilder builder = new StringBuilder();
@@ -25,7 +25,7 @@ namespace ExpressionToString
         /// <param name="expression">The expression to format</param>
         /// <param name="trimLongArgumentList">If true will replace large (>3) argument lists with an elipsis</param>
         /// <returns></returns>
-        public static string ToString(Expression expression, bool trimLongArgumentList = false)
+        internal static string ToString(Expression expression, bool trimLongArgumentList = false)
         {
             var visitor = new ExpressionStringBuilder(trimLongArgumentList);
             visitor.Visit(expression);

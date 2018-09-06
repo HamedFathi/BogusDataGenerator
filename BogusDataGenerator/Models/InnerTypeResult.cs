@@ -1,4 +1,5 @@
 ﻿using BogusDataGenerator.Enums;
+using BogusDataGenerator.Extensions;
 using System;
 
 namespace BogusDataGenerator.Models
