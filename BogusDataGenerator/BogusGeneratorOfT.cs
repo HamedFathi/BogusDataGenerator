@@ -74,7 +74,7 @@ namespace BogusDataGenerator
             _bogusData.Locales = locales;
             return this;
         }
-        public BogusGenerator<T> AddText(string text, ExtraTextType appendTextType = ExtraTextType.Before)
+        /*public BogusGenerator<T> AddText(string text, ExtraTextType appendTextType = ExtraTextType.Before)
         {
             if (appendTextType == ExtraTextType.Before)
             {
@@ -85,7 +85,7 @@ namespace BogusDataGenerator
                 _bogusData.TextAfter.Add(text);
             }
             return this;
-        }
+        }*/
 
         public BogusGenerator<T> AddPredefinedRule(BogusData bogusData)
         {
