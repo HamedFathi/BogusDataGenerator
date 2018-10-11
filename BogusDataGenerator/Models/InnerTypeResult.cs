@@ -8,7 +8,7 @@ namespace BogusDataGenerator.Models
     {
         public string UniqueId
         {
-            get { return $"{Level}-{Name}-{Type.ToString()}"; }
+            get { return $"{Level}-{Name}-{FriendlyTypeName}"; }
         }
 
         public int Level { get; set; }
@@ -16,6 +16,22 @@ namespace BogusDataGenerator.Models
         public TypeStatus Status { get; set; }
         public string Name { get; set; }
         public string Parent { get; set; }
+
+        public string Namespace
+        {
+            get
+            {
+                return Type.Namespace;
+            }
+        }
+
+        public string Location
+        {
+            get
+            {
+                return Type.Assembly.Location;
+            }
+        }
 
         public string TypeName
         {

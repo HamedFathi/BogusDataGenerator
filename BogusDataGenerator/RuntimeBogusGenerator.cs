@@ -1,27 +1,29 @@
-﻿using BogusDataGenerator.Models;
+﻿using Bogus;
+using BogusDataGenerator.Models;
 using Humanizer;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
 using System.Linq;
-using System.Reflection;
 
 namespace BogusDataGenerator
 {
     public static class RuntimeBogusGenerator<T> where T : class, new()
     {
-        public static List<T> AutoFaker(int count = 1, List<string> assembliesLocations = null, params BogusData[] bogusData)
+        public static List<T> AutoFaker(int count = 1, params BogusData[] bogusData)
         {
             var name = typeof(T).Name;
             var variableName = name.Camelize();
             var className = $"{name}TestData";
-            var fakerSource = new BogusGenerator<T>().AddPredefinedRules(bogusData).Create();
+            var bogusGenerator = new BogusGenerator<T>().AddPredefinedRules(bogusData);
+            var fakerSource = bogusGenerator.Create();
+            var assemblies = bogusGenerator.Assemblies.Distinct().ToList();
+            assemblies.Add(typeof(Faker<>).Assembly.Location);
+            var namespaces = bogusGenerator.Namespaces.Select(x => "using " + x + ";").Aggregate((a, b) => a + Environment.NewLine + b);
             var source = $@"
-            using System;
+using System;
 using System.Collections.Generic;
 using Bogus;
-using BogusDataGenerator.Test;
+{namespaces}
 using System.Linq;
 
 public class {className}
@@ -37,7 +39,7 @@ public class {className}
 
 ";
             var errors = new List<string>();
-            var type = source.ToType(null, className, out errors, assembliesLocations);
+            var type = source.ToType(null, className, out errors, assemblies);
 
             if (errors == null)
             {
