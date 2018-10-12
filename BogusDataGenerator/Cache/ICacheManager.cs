@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BogusDataGenerator.Extensions
+namespace BogusDataGenerator.Cache
 {
     public interface ICacheManager
     {

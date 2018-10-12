@@ -1,6 +1,8 @@
 ﻿using Bogus;
 using BogusDataGenerator.Enums;
 using BogusDataGenerator.Extensions;
+using FluentValidation;
+using FluentValidation.Results;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +10,13 @@ using System.Linq.Expressions;
 
 namespace BogusDataGenerator.Test
 {
+    public class CourseValidator : AbstractValidator<Course>
+    {
+        public CourseValidator()
+        {
+            RuleFor(x => x.CourseID).NotEmpty();
+        }
+    }
     class Program
     {
         static void Main(string[] args)
@@ -33,8 +42,13 @@ namespace BogusDataGenerator.Test
                   .Store()
               ;
 
-            var courses = RuntimeBogusGenerator<Course>.AutoFaker(200, rule1, rule2, rule3);
-            Console.WriteLine(new BogusGenerator<Course>().AddPredefinedRules(rule1, rule2, rule3).Create());
+            var courses = new BogusGenerator<Course>().AutoFaker(200, rule1, rule2, rule3);
+            Console.WriteLine(new BogusGenerator<Course>().AddPredefinedRules(rule1, rule2, rule3).Text());
+            var validator = new CourseValidator();
+            FluentValidation.Results.ValidationResult results = validator.Validate(courses[0]);
+
+            bool success = results.IsValid;
+            IList<ValidationFailure> failures = results.Errors;
             Console.ReadKey();
         }
     }

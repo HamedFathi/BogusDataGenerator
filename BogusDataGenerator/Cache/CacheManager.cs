@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace BogusDataGenerator.Extensions
+namespace BogusDataGenerator.Cache
 {
     public class CacheManager : ICacheManager
     {

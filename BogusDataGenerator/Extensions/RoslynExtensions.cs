@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace BogusDataGenerator
+namespace BogusDataGenerator.Extensions
 {
     public static class RoslynExtensions
     {
@@ -17,13 +17,13 @@ namespace BogusDataGenerator
             assembliesLocations = assembliesLocations ?? new List<string>();
             var mscorlib = typeof(object).Assembly.Location;
             var netstandard = Path.Combine(Path.GetDirectoryName(mscorlib), "netstandard.dll");
-            var runtime = Path.Combine(Path.GetDirectoryName(mscorlib), "System.Runtime.dll");
-            var collections = Path.Combine(Path.GetDirectoryName(mscorlib), "System.Collections.dll");
+            // var runtime = Path.Combine(Path.GetDirectoryName(mscorlib), "System.Runtime.dll");
+            // var collections = Path.Combine(Path.GetDirectoryName(mscorlib), "System.Collections.dll");
 
 
             var allSystems = Directory.EnumerateFiles(Path.GetDirectoryName(mscorlib), "System.*", SearchOption.TopDirectoryOnly).ToList();
 
-            assembliesLocations = assembliesLocations.Concat(new List<string>() { mscorlib, netstandard, runtime, collections }).Concat(allSystems).ToList();
+            assembliesLocations = assembliesLocations.Concat(new List<string>() { mscorlib, netstandard /*, runtime, collections*/ }).Concat(allSystems).ToList();
             var portableExecutableReferences = new List<PortableExecutableReference>();
 
             foreach (var location in assembliesLocations.Distinct())

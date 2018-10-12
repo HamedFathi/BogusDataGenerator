@@ -11,17 +11,11 @@ using System.Text;
 
 namespace BogusDataGenerator
 {
-    public class SourceResult
-    {
-        public string Source { get; set; }
-        public List<string> Namespaces { get; set; }
-        public List<string> Assemblies { get; set; }
-
-    }
     public class BogusGenerator<T> where T : class, new()
     {
         private BogusData _bogusData;
-
+        internal List<string> Namespaces { get; private set; }
+        internal List<string> Assemblies { get; private set; }
         public BogusGenerator()
         {
             _bogusData = new BogusData();
@@ -85,18 +79,6 @@ namespace BogusDataGenerator
             _bogusData.Locales = locales;
             return this;
         }
-        /*public BogusGenerator<T> AddText(string text, ExtraTextType appendTextType = ExtraTextType.Before)
-        {
-            if (appendTextType == ExtraTextType.Before)
-            {
-                _bogusData.TextBefore.Add(text);
-            }
-            else
-            {
-                _bogusData.TextAfter.Add(text);
-            }
-            return this;
-        }*/
 
         public BogusGenerator<T> AddPredefinedRule(BogusData bogusData)
         {
@@ -119,7 +101,7 @@ namespace BogusDataGenerator
         // All ConditionalPropertyRuleFor
         // All TypeRuleFor
 
-        public string Create()
+        public string Text()
         {
             var sb = new StringBuilder();
             if (_bogusData.TextBefore.Count > 0)
@@ -138,8 +120,7 @@ namespace BogusDataGenerator
             return sb.ToString();
         }
 
-        internal List<string> Namespaces { get; private set; }
-        public List<string> Assemblies { get; private set; }
+
 
         private SourceResult BogusCreator(Type type, string variableName = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
         {
@@ -287,6 +268,42 @@ namespace BogusDataGenerator
             return new SourceResult() { Source = sb.ToString(), Namespaces = namespaces, Assemblies = assemblies };
         }
 
+        public List<T> AutoFaker(int count = 1, params BogusData[] bogusData)
+        {
+            var name = typeof(T).Name;
+            var variableName = name.Camelize();
+            var className = $"{name}TestData";
+            var bogusGenerator = new BogusGenerator<T>().AddPredefinedRules(bogusData);
+            var fakerSource = bogusGenerator.Text();
+            var assemblies = bogusGenerator.Assemblies.Distinct().ToList();
+            assemblies.Add(typeof(Faker<>).Assembly.Location);
+            var namespaces = bogusGenerator.Namespaces.Select(x => "using " + x + ";").Aggregate((a, b) => a + Environment.NewLine + b);
+            var source = $@"
+using System;
+using System.Collections.Generic;
+using Bogus;
+{namespaces}
+using System.Linq;
 
+public class {className}
+{{
+	public List<{name}> Get()
+	{{
+        {fakerSource}
+        var result = {variableName}.Generate({count});
+        return result;
+    }}
+}}";
+            var errors = new List<string>();
+            var type = source.ToType(null, className, out errors, assemblies);
+
+            if (errors == null)
+            {
+                var testData = (List<T>)type.GetMethod("Get").Invoke(Activator.CreateInstance(type), null);
+                return testData;
+            }
+
+            return null;
+        }
     }
 }
