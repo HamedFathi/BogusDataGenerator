@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BogusDataGenerator.Cache
 {
-    public class CacheManager : ICacheManager
+    internal class CacheManager : ICacheManager
     {
         private readonly ConcurrentDictionary<string, object> cache = new ConcurrentDictionary<string, object>();
 

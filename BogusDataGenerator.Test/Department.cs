@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BogusDataGenerator.Test
+namespace BogusDataGenerator.Test.Dep
 {
     public class Department
     {

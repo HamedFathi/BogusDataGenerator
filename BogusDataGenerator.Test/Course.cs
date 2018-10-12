@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using BogusDataGenerator.Test.Dep;
+using System.Collections.Generic;
 
 namespace BogusDataGenerator.Test
 {

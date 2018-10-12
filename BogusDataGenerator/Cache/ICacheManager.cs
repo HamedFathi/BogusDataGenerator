@@ -2,7 +2,7 @@
 
 namespace BogusDataGenerator.Cache
 {
-    public interface ICacheManager
+    internal interface ICacheManager
     {
         /// <summary>
         /// Check whether the key is contained by the cache

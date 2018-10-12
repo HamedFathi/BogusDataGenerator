@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using BogusDataGenerator.Test.Dep;
+using FluentValidation;
 using FluentValidation.Results;
 using System;
 using System.Collections.Generic;

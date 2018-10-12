@@ -2,7 +2,7 @@
 
 namespace BogusDataGenerator.Models
 {
-    public class SourceResult
+    internal class SourceResult
     {
         public string Source { get; set; }
         public List<string> Namespaces { get; set; }

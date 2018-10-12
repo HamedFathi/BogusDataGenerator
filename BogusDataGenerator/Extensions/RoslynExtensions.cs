@@ -10,7 +10,7 @@ using System.Runtime.Loader;
 
 namespace BogusDataGenerator.Extensions
 {
-    public static class RoslynExtensions
+    internal static class RoslynExtensions
     {
         public static Type ToType(this string source, string @namespace, string @class, out List<string> failures, List<string> assembliesLocations = null)
         {

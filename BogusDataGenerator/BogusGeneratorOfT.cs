@@ -282,8 +282,9 @@ namespace BogusDataGenerator
 using System;
 using System.Collections.Generic;
 using Bogus;
-{namespaces}
 using System.Linq;
+using {typeof(T).Namespace};
+{namespaces}
 
 public class {className}
 {{

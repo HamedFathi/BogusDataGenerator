@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace BogusDataGenerator.Extensions
 {
-    public static class Utilities
+    internal static class Utilities
     {
         public static List<InnerTypeResult> GetInnerTypes(this Type type, params Type[] predefinedTypes)
         {
