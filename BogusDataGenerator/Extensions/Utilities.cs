@@ -16,7 +16,8 @@ namespace BogusDataGenerator.Extensions
     {
         public static List<InnerTypeResult> GetInnerTypes(this Type type, params Type[] predefinedTypes)
         {
-            var result = GetInnerTypesInfo(type, 0, "", predefinedTypes);
+            var id = type.FullName + "-" + type.GetHashCode();
+            var result = Cache.CacheManager.Instance.GetOrSet<List<InnerTypeResult>>(id, GetInnerTypesInfo(type, 0, "", predefinedTypes));
             //if (!type.IsClassOnly())
             //{
             //    var newResult = new List<InnerTypeResult>();
@@ -163,7 +164,7 @@ namespace BogusDataGenerator.Extensions
                         propertyName = string.IsNullOrEmpty(propertyName) ? itemType.Name : propertyName;
                         typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Enumerable });
                         typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
-                    }                   
+                    }
                     if (type.IsTuple())
                     {
                         level = prevLevel + 1;

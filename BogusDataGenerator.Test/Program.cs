@@ -40,6 +40,7 @@ namespace BogusDataGenerator.Test
 
             var courses = new BogusGenerator<Course>().AutoFaker(200, rule1, rule2, rule3);
             Console.WriteLine(new BogusGenerator<Course>().AddPredefinedRules(rule1, rule2, rule3).Text());
+            var courses2 = new BogusGenerator<Course>().AutoFaker(1000, rule1, rule2, rule3);
             var validator = new CourseValidator();
             FluentValidation.Results.ValidationResult results = validator.Validate(courses[0]);
 
