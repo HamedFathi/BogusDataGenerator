@@ -1,12 +1,7 @@
-﻿using Bogus;
-using BogusDataGenerator.Enums;
-using BogusDataGenerator.Extensions;
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.Results;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 
 namespace BogusDataGenerator.Test
 {
