@@ -8,27 +8,27 @@ namespace BogusDataGenerator
 {
     public class BogusGenerator
     {
-        private BogusData _bogusData;
+        private RuleSet _ruleSet;
         public BogusGenerator()
         {
-            _bogusData = new BogusData();
+            _ruleSet = new RuleSet();
         }
-        public BogusGenerator TypeRuleFor<U>(Expression<Func<Faker, U>> setter, params string[] locales)         
+        public BogusGenerator RuleForType<T>(Expression<Func<Faker, T>> setter, string[] locales = null)         
         {
             var setterExp = setter.ToExpressionString();
-            _bogusData.TypeRules.Add(new TypeRule
+            _ruleSet.TypeRules.Add(new TypeRule
             {
-                TypeName = typeof(U).ToString(),
+                TypeName = typeof(T).ToString(),
                 SetterExpression = setter,
                 SetterExpressionText = setter.ToExpressionString(),
                 Locales = null
             });
             return this;
         }
-        public BogusGenerator ConditionalPropertyRuleFor<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, params string[] locales)
+        public BogusGenerator RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, string[] locales = null)
         {
             var setterExp = setter.ToExpressionString(); ;
-            _bogusData.ConditionalPropertyRules.Add(new ConditionalPropertyRule
+            _ruleSet.ConditionalPropertyRules.Add(new ConditionalPropertyRule
             {
                 TypeName = null,
                 PropertyExpressionText = null,
@@ -41,20 +41,20 @@ namespace BogusDataGenerator
             return this;
         }
 
-        public BogusGenerator AddPredefinedRule(BogusData bogusData)
+        public BogusGenerator AddRuleSet(RuleSet ruleSet)
         {
-            _bogusData.PredefinedRules.Add(bogusData);
+            _ruleSet.RuleSets.Add(ruleSet);
             return this;
         }
-        public BogusGenerator AddPredefinedRules(params BogusData[] bogusData)
+        public BogusGenerator AddRuleSets(params RuleSet[] ruleSet)
         {
-            _bogusData.PredefinedRules.AddRange(bogusData);
+            _ruleSet.RuleSets.AddRange(ruleSet);
             return this;
         }
 
-        public BogusData Store()
+        public RuleSet Store()
         {
-            return _bogusData;
+            return _ruleSet;
         }
     }
 }

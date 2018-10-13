@@ -18,16 +18,6 @@ namespace BogusDataGenerator.Extensions
         {
             var id = type.FullName + "-" + type.GetHashCode();
             var result = Cache.CacheManager.Instance.GetOrSet<List<InnerTypeResult>>(id, GetInnerTypesInfo(type, 0, "", predefinedTypes));
-            //if (!type.IsClassOnly())
-            //{
-            //    var newResult = new List<InnerTypeResult>();
-            //    foreach (var item in result)
-            //    {
-            //        item.Level -= 1;
-            //        newResult.Add(item);
-            //    }
-            //    return newResult;
-            //}
             return result;
         }
         public static List<InnerTypeResult> Sort(this List<InnerTypeResult> innerTypeResults, SortType sortType)
