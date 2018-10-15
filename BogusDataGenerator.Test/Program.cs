@@ -10,7 +10,7 @@ namespace BogusDataGenerator.Test
     {
         public CourseValidator()
         {
-            RuleFor(x => x.CourseID).NotEmpty();
+            //RuleFor(x => x.CourseID).NotEmpty();
         }
     }
     class Program
@@ -32,14 +32,15 @@ namespace BogusDataGenerator.Test
 
             var rule3 = new BogusGenerator<Course>()
                   .StrictMode()
-                  .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
-                  .RuleForType(x => 100)
-                  .AddPredefinedRules(rule1, rule2)
+                  .RuleForProperty(x => x.Credits, (u, v) => null)
+                  .RuleForType(x => 100)                  
+                  .RuleForNumberOfCollection(x => x.Credits, 30)
+                  .AddRuleSet(rule1, rule2)
                   .Store()
               ;
 
             var courses = new BogusGenerator<Course>().AutoFaker(200, rule1, rule2, rule3);
-            Console.WriteLine(new BogusGenerator<Course>().AddPredefinedRules(rule1, rule2, rule3).Text());
+            Console.WriteLine(new BogusGenerator<Course>().AddRuleSet(rule1, rule2, rule3).Text());
             var courses2 = new BogusGenerator<Course>().AutoFaker(1000, rule1, rule2, rule3);
             var validator = new CourseValidator();
             FluentValidation.Results.ValidationResult results = validator.Validate(courses[0]);

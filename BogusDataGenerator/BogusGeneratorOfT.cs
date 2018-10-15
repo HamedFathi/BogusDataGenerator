@@ -4,6 +4,8 @@ using BogusDataGenerator.Extensions;
 using BogusDataGenerator.Models;
 using Humanizer;
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -13,6 +15,7 @@ namespace BogusDataGenerator
 {
     public class BogusGenerator<T> where T : class, new()
     {
+        private readonly ConcurrentDictionary<string, int> _numberOfCollection = new ConcurrentDictionary<string, int>();
         private RuleSet _ruleSet;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
@@ -20,6 +23,33 @@ namespace BogusDataGenerator
         {
             _ruleSet = new RuleSet();
 
+        }
+
+        public BogusGenerator<T> RuleForNumberOfCollection<TProperty>(Expression<Func<T, TProperty>> property, uint number)
+        {
+            var isZero = number == 0;
+            var isCollection = typeof(TProperty).IsArray || typeof(TProperty).IsCollection() || typeof(TProperty).IsEnumerable();
+            if (isZero)
+            {
+                throw new Exception($"You can not set {nameof(number)} to 0.");
+            }
+            if (!isCollection)
+            {
+                throw new Exception($"You can not use this method to non collection types.");
+            }
+            var key = typeof(T).FullName + "-" + property.GetName() + "-" + typeof(TProperty).FullName;
+            if (isCollection)
+            {
+                if (_numberOfCollection.Keys.Contains(key))
+                {
+                    _numberOfCollection[key] = (int)number;
+                }
+                else
+                {
+                    _numberOfCollection.AddOrUpdate(key, (int)number);
+                }
+            }
+            return this;
         }
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
             Expression<Func<Faker, T, TProperty>> setter)
@@ -80,12 +110,7 @@ namespace BogusDataGenerator
             return this;
         }
 
-        public BogusGenerator<T> AddPredefinedRule(RuleSet ruleSet)
-        {
-            _ruleSet.RuleSets.Add(ruleSet);
-            return this;
-        }
-        public BogusGenerator<T> AddPredefinedRules(params RuleSet[] ruleSet)
+        public BogusGenerator<T> AddRuleSet(params RuleSet[] ruleSet)
         {
             _ruleSet.RuleSets.AddRange(ruleSet);
             return this;
@@ -178,9 +203,16 @@ namespace BogusDataGenerator
                 {
                     var varName = innerType.Name.Camelize();
                     var singularVariableName = varName.Singularize(false);
+
+                    var key = innerType.Parent + "-" + innerType.TypeName;
+                    var number = 100;
+                    if (_numberOfCollection.Keys.Contains(key))
+                    {
+                        number = _numberOfCollection[key];
+                    }
                     if (variables.Contains(singularVariableName))
                     {
-                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {singularVariableName}.Generate(100).ToArray())", 1);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {singularVariableName}.Generate({number}).ToArray())", 1);
                     }
                     else
                     {
@@ -188,7 +220,7 @@ namespace BogusDataGenerator
                         var elementType = innerType.Type.GetElementType();
                         var anotherFaker = BogusCreator(elementType, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
                         sb.Prepend(anotherFaker);
-                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToArray())", 1);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate({number}).ToArray())", 1);
                     }
                 }
                 else
@@ -273,7 +305,7 @@ namespace BogusDataGenerator
             var name = typeof(T).Name;
             var variableName = name.Camelize();
             var className = $"{name}TestData";
-            var bogusGenerator = new BogusGenerator<T>().AddPredefinedRules(ruleSet);
+            var bogusGenerator = new BogusGenerator<T>().AddRuleSet(ruleSet);
             var fakerSource = bogusGenerator.Text();
             var assemblies = bogusGenerator.Assemblies.Distinct().ToList();
             assemblies.Add(typeof(Faker<>).Assembly.Location);

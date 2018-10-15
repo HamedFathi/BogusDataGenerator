@@ -3,6 +3,7 @@ using BogusDataGenerator.Models;
 using Microsoft.CSharp;
 using System;
 using System.CodeDom;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -267,7 +268,7 @@ namespace BogusDataGenerator.Extensions
         {
             return type == typeof(DateTime);
         }
-        private static bool IsCollection(this Type type)
+        internal static bool IsCollection(this Type type)
         {
             return type.GetInterface("ICollection") != null;
         }
@@ -275,7 +276,7 @@ namespace BogusDataGenerator.Extensions
         {
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>);
         }
-        private static bool IsEnumerable(this Type type)
+        internal static bool IsEnumerable(this Type type)
         {
             return type.GetInterface("IEnumerable") != null;
         }
@@ -330,6 +331,10 @@ namespace BogusDataGenerator.Extensions
             return expr.Member.Name;
         }
 
+        internal static void AddOrUpdate<K, V>(this ConcurrentDictionary<K, V> dictionary, K key, V value)
+        {
+            dictionary.AddOrUpdate(key, value, (oldkey, oldvalue) => value);
+        }
         private static bool IsNullableValueType(this Type type)
         {
             return Nullable.GetUnderlyingType(type) != null;
