@@ -14,6 +14,8 @@ namespace BogusDataGenerator.Models
 
         public Func<string, bool> Condition { get; set; }
         public string[] Locales { get; set; }
+        public int Repetition { get; set; }
+
 
     }
 }

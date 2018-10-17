@@ -13,7 +13,7 @@ namespace BogusDataGenerator
         {
             _ruleSet = new RuleSet();
         }
-        public BogusGenerator RuleForType<T>(Expression<Func<Faker, T>> setter, string[] locales = null)         
+        public BogusGenerator RuleForType<T>(Expression<Func<Faker, T>> setter, string[] locales = null, int repetition = 1)
         {
             var setterExp = setter.ToExpressionString();
             _ruleSet.TypeRules.Add(new TypeRule
@@ -21,11 +21,12 @@ namespace BogusDataGenerator
                 TypeName = typeof(T).ToString(),
                 SetterExpression = setter,
                 SetterExpressionText = setter.ToExpressionString(),
-                Locales = null
+                Locales = null,
+                Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
             });
             return this;
         }
-        public BogusGenerator RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, string[] locales = null)
+        public BogusGenerator RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, TProperty>> setter, string[] locales = null, int repetition = 1)
         {
             var setterExp = setter.ToExpressionString(); ;
             _ruleSet.ConditionalPropertyRules.Add(new ConditionalPropertyRule
@@ -36,7 +37,8 @@ namespace BogusDataGenerator
                 SetterExpression = setter,
                 SetterExpressionText = setter.ToExpressionString(),
                 Locales = locales,
-                Condition = condition
+                Condition = condition,
+                Repetition = repetition
             });
             return this;
         }

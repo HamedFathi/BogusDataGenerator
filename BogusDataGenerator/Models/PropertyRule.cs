@@ -10,5 +10,7 @@ namespace BogusDataGenerator.Models
         public string SetterExpressionText { get; set; }
         public LambdaExpression PropertyExpression { get; set; }
         public LambdaExpression SetterExpression { get; set; }
+        public int Repetition { get; set; }
+
     }
 }

@@ -4,8 +4,6 @@ using BogusDataGenerator.Extensions;
 using BogusDataGenerator.Models;
 using Humanizer;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -21,29 +19,10 @@ namespace BogusDataGenerator
         public BogusGenerator()
         {
             _ruleSet = new RuleSet();
+        }
 
-        }
-        public BogusGenerator<T> RuleForNumberOfCollection<TProperty>(Expression<Func<T, TProperty>> property, int number)
-        {
-            var isZeroOrNegetive = number <= 0;
-            var isCollection = typeof(TProperty).IsArray || typeof(TProperty).IsCollection() || typeof(TProperty).IsEnumerable();
-            if (isZeroOrNegetive)
-            {
-                throw new Exception($"You can not set {nameof(number)} to 0 or negetive.");
-            }
-            if (!isCollection)
-            {
-                throw new Exception($"You can not use this method to non collection types.");
-            }
-            var key = typeof(T).FullName + "-" + property.GetName() + "-" + typeof(TProperty).FullName;
-            if (isCollection)
-            {
-                Cache.CacheManager.Instance.GetOrSet<int>(key, number);
-            }
-            return this;
-        }
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
-            Expression<Func<Faker, T, TProperty>> setter)
+            Expression<Func<Faker, T, TProperty>> setter, int repetition = 1)
         {
             _ruleSet.PropertyRules.Add(new PropertyRule()
             {
@@ -52,23 +31,25 @@ namespace BogusDataGenerator
                 PropertyExpressionText = property.ToExpressionString(),
                 SetterExpressionText = setter.ToExpressionString(),
                 PropertyExpression = property,
-                SetterExpression = setter
+                SetterExpression = setter,
+                Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
             });
             return this;
         }
 
-        public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter)
+        public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter, int repetition = 1)
         {
             _ruleSet.TypeRules.Add(new TypeRule
             {
                 TypeName = typeof(U).ToString(),
                 SetterExpressionText = setter.ToExpressionString(),
                 SetterExpression = setter,
-                Locales = null
+                Locales = null,
+                Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
             });
             return this;
         }
-        public BogusGenerator<T> RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter)
+        public BogusGenerator<T> RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter, int repetition = 1)
         {
             var props = typeof(T).GetProperties().Select(x => x.Name).ToList();
             foreach (var prop in props)
@@ -83,7 +64,8 @@ namespace BogusDataGenerator
                         SetterExpressionText = setter.ToExpressionString(),
                         SetterExpression = setter,
                         Locales = null,
-                        Condition = condition
+                        Condition = condition,
+                        Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
                     });
                 }
             }
@@ -195,20 +177,15 @@ namespace BogusDataGenerator
                     var varName = innerType.Name.Camelize();
                     var singularVariableName = varName.Singularize(false);
                     var key = typeof(T).FullName + "-" + innerType.Name + "-" + innerType.Type;
-                    var number = 100;
-                    if (Cache.CacheManager.Instance.Contains(key))
-                    {
-                        number = Cache.CacheManager.Instance.Get<int>(key);
-                    }
                     if (variables.Contains(singularVariableName))
                     {
-                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {singularVariableName}.Generate({number}).ToArray())", 1);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {singularVariableName}.Generate(100).ToArray())", 1);
                     }
                     else
                     {
                         variables.Add(varName);
                         var elementType = innerType.Type.GetElementType();
-                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate({number}).ToArray())", 1);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToArray())", 1);
                     }
                 }
                 else

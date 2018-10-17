@@ -343,6 +343,22 @@ namespace BogusDataGenerator.Extensions
         {
             return ExpressionStringBuilder.ToString(expression, trimLongArgumentList);
         }
+        private static bool IsNotType(this object source, Type targetType)
+        {
+            return source.GetType() != targetType;
+        }
+        private static bool IsType(this object source, Type targetType)
+        {
+            return source.GetType() == targetType;
+        }
+
+        internal static bool IsAcceptableCollection(this Type type)
+        {
+            var isString = type.IsNotType(typeof(string));
+            var isCollection = type.IsArray || type.IsCollection() || type.IsEnumerable();
+            return !isString && isCollection;
+        }
+
         internal static bool ContainsOneOf(this string[] array, string[] items)
         {
             if (array == null || items == null)
