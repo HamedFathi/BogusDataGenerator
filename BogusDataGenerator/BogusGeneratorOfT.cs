@@ -15,7 +15,6 @@ namespace BogusDataGenerator
 {
     public class BogusGenerator<T> where T : class, new()
     {
-        private readonly ConcurrentDictionary<string, int> _numberOfCollection = new ConcurrentDictionary<string, int>();
         private RuleSet _ruleSet;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
@@ -24,14 +23,13 @@ namespace BogusDataGenerator
             _ruleSet = new RuleSet();
 
         }
-
-        public BogusGenerator<T> RuleForNumberOfCollection<TProperty>(Expression<Func<T, TProperty>> property, uint number)
+        public BogusGenerator<T> RuleForNumberOfCollection<TProperty>(Expression<Func<T, TProperty>> property, int number)
         {
-            var isZero = number == 0;
+            var isZeroOrNegetive = number <= 0;
             var isCollection = typeof(TProperty).IsArray || typeof(TProperty).IsCollection() || typeof(TProperty).IsEnumerable();
-            if (isZero)
+            if (isZeroOrNegetive)
             {
-                throw new Exception($"You can not set {nameof(number)} to 0.");
+                throw new Exception($"You can not set {nameof(number)} to 0 or negetive.");
             }
             if (!isCollection)
             {
@@ -40,14 +38,7 @@ namespace BogusDataGenerator
             var key = typeof(T).FullName + "-" + property.GetName() + "-" + typeof(TProperty).FullName;
             if (isCollection)
             {
-                if (_numberOfCollection.Keys.Contains(key))
-                {
-                    _numberOfCollection[key] = (int)number;
-                }
-                else
-                {
-                    _numberOfCollection.AddOrUpdate(key, (int)number);
-                }
+                Cache.CacheManager.Instance.GetOrSet<int>(key, number);
             }
             return this;
         }
@@ -203,12 +194,11 @@ namespace BogusDataGenerator
                 {
                     var varName = innerType.Name.Camelize();
                     var singularVariableName = varName.Singularize(false);
-
-                    var key = innerType.Parent + "-" + innerType.TypeName;
+                    var key = typeof(T).FullName + "-" + innerType.Name + "-" + innerType.Type;
                     var number = 100;
-                    if (_numberOfCollection.Keys.Contains(key))
+                    if (Cache.CacheManager.Instance.Contains(key))
                     {
-                        number = _numberOfCollection[key];
+                        number = Cache.CacheManager.Instance.Get<int>(key);
                     }
                     if (variables.Contains(singularVariableName))
                     {
@@ -218,8 +208,6 @@ namespace BogusDataGenerator
                     {
                         variables.Add(varName);
                         var elementType = innerType.Type.GetElementType();
-                        var anotherFaker = BogusCreator(elementType, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
-                        sb.Prepend(anotherFaker);
                         sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate({number}).ToArray())", 1);
                     }
                 }

@@ -10,7 +10,7 @@ namespace BogusDataGenerator.Test
     {
         public CourseValidator()
         {
-            //RuleFor(x => x.CourseID).NotEmpty();
+            RuleFor(x => x.CourseID).NotEmpty();
         }
     }
     class Program
@@ -27,13 +27,15 @@ namespace BogusDataGenerator.Test
             var rule2 = new BogusGenerator<Department>()
                 .RuleForProperty(x => x.Budget, (u, v) => u.Random.Decimal(60, 55555))
                 .RuleForProperty(x => x.Administrator, (u, v) => 0)
+                .RuleForProperty(x => x.Phones, (u, v) => new[] { "1" })
+                //.RuleForNumberOfCollection(x => x.Phones, 30)
                 .Store()
                 ;
 
             var rule3 = new BogusGenerator<Course>()
                   .StrictMode()
-                  .RuleForProperty(x => x.Credits, (u, v) => null)
-                  .RuleForType(x => 100)                  
+                   .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
+                  .RuleForType(x => 100)
                   .RuleForNumberOfCollection(x => x.Credits, 30)
                   .AddRuleSet(rule1, rule2)
                   .Store()
