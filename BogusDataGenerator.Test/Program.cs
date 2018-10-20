@@ -28,12 +28,14 @@ namespace BogusDataGenerator.Test
                 .RuleForProperty(x => x.Budget, (u, v) => u.Random.Decimal(60, 55555))
                 .RuleForProperty(x => x.Administrator, (u, v) => 0)
                 .RuleForProperty(x => x.Phones, (u, v) => new[] { "1" })
+
                 .Store()
                 ;
 
             var rule3 = new BogusGenerator<Course>()
                   .StrictMode()
-                   .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
+                  .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
+                  .RuleForProperty(x => x.Departments, null)
                   .RuleForType(x => 100)
                   .AddRuleSet(rule1, rule2)
                   .Store()
