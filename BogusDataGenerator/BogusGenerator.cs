@@ -13,6 +13,7 @@ namespace BogusDataGenerator
         {
             _ruleSet = new RuleSet();
         }
+
         public BogusGenerator RuleForType<T>(Expression<Func<Faker, T>> setter, string[] locales = null, int repetition = 1)
         {
             var setterExp = setter.ToExpressionString();
@@ -53,6 +54,8 @@ namespace BogusDataGenerator
             _ruleSet.RuleSets.AddRange(ruleSet);
             return this;
         }
+
+
 
         public RuleSet Store()
         {

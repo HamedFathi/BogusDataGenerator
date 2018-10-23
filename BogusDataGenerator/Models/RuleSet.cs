@@ -2,6 +2,7 @@
 
 namespace BogusDataGenerator.Models
 {
+
     public class RuleSet
     {
         public RuleSet()
@@ -12,10 +13,14 @@ namespace BogusDataGenerator.Models
             TextBefore = new List<string>();
             TextAfter = new List<string>();
             RuleSets = new List<RuleSet>();
+            DependentRules = new List<DependentRule>();
         }
 
+        public string VariableName { get; set; }
         public bool IsStrictMode { get; set; } = false;
         public List<PropertyRule> PropertyRules { get; set; }
+
+        public List<DependentRule> DependentRules { get; set; }
         public List<ConditionalPropertyRule> ConditionalPropertyRules { get; set; }
         public List<TypeRule> TypeRules { get; set; }
         public List<string> TextBefore { get; set; }

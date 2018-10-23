@@ -17,7 +17,7 @@ namespace BogusDataGenerator.Models
         public string Name { get; set; }
         public string Parent { get; set; }
 
-        public string Namespace
+        public string TypeNamespace
         {
             get
             {

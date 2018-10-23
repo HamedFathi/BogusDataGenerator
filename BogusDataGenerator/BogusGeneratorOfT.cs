@@ -11,14 +11,25 @@ using System.Text;
 
 namespace BogusDataGenerator
 {
-    public class BogusGenerator<T> where T : class, new()
+    public class BogusGenerator<T>
+        where T : class, new()
     {
         private RuleSet _ruleSet;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
+
+        internal string GetVariableName(Type type, string propertyName = "")
+        {
+            var variable = (typeof(T).Namespace + typeof(T).Name + propertyName).Replace(".", "");
+            return variable.Camelize();
+        }
+
         public BogusGenerator()
         {
-            _ruleSet = new RuleSet();
+            _ruleSet = new RuleSet
+            {
+                VariableName = GetVariableName(typeof(T))
+            };
         }
 
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
@@ -37,6 +48,23 @@ namespace BogusDataGenerator
             return this;
         }
 
+
+        public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property, RuleSet ruleSet, int repetition = 1)
+        {
+            _ruleSet.DependentRules.Add(new DependentRule()
+            {
+                PropertyName = property.GetName(),
+                Repetition = repetition,
+                VariableName = ruleSet.VariableName,
+                RuleSet = ruleSet
+            });
+            if (!_ruleSet.RuleSets.Contains(ruleSet))
+            {
+                _ruleSet.RuleSets.Add(ruleSet);
+            }
+            return this;
+        }
+
         public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter, int repetition = 1)
         {
             _ruleSet.TypeRules.Add(new TypeRule
@@ -49,6 +77,7 @@ namespace BogusDataGenerator
             });
             return this;
         }
+
         public BogusGenerator<T> RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter, int repetition = 1)
         {
             var props = typeof(T).GetProperties().Select(x => x.Name).ToList();
@@ -85,9 +114,17 @@ namespace BogusDataGenerator
 
         public BogusGenerator<T> AddRuleSet(params RuleSet[] ruleSet)
         {
-            _ruleSet.RuleSets.AddRange(ruleSet);
+            foreach (var rule in ruleSet)
+            {
+                if (!_ruleSet.RuleSets.Contains(rule))
+                {
+                    _ruleSet.RuleSets.Add(rule);
+                }
+            }
             return this;
         }
+
+
 
         public RuleSet Store()
         {
@@ -137,15 +174,16 @@ namespace BogusDataGenerator
 
             var processed = new List<string>();
             var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null && x.Parent == type.FullName).ToList();
-            namespaces.AddRange(innerTypes.Select(s => s.Namespace));
+            namespaces.AddRange(innerTypes.Select(s => s.TypeNamespace));
             assemblies.AddRange(innerTypes.Select(s => s.Location));
+            var depVars = _ruleSet.RuleSets.SelectMany(x => x.DependentRules).ToList();
 
             foreach (var innerType in innerTypes)
             {
 
                 if (innerType.Status == TypeStatus.Class)
                 {
-                    var varName = innerType.Name.Camelize();
+                    var varName = GetVariableName(innerType.Type, innerType.Name);
                     var anotherFaker = BogusCreator(innerType.Type, varName, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
                     sb.Prepend(anotherFaker);
                     sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate())", 1);
@@ -153,7 +191,7 @@ namespace BogusDataGenerator
 
                 if (innerType.Status == TypeStatus.Enumerable || innerType.Status == TypeStatus.Collection)
                 {
-                    var varName = innerType.Name.Camelize();
+                    var varName = GetVariableName(innerType.Type, innerType.Name);
                     var singularVariableName = varName.Singularize(false);
                     var itemType = innerType.Type.GetGenericArguments()[0];
                     var anotherFaker = BogusCreator(itemType, varName, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
@@ -164,7 +202,7 @@ namespace BogusDataGenerator
                 }
                 if (innerType.Status == TypeStatus.Array)
                 {
-                    var varName = innerType.Name.Camelize();
+                    var varName = GetVariableName(innerType.Type, innerType.Name);
                     var singularVariableName = varName.Singularize(false);
                     var key = typeof(T).FullName + "-" + innerType.Name + "-" + innerType.Type;
 

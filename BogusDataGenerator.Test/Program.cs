@@ -13,6 +13,9 @@ namespace BogusDataGenerator.Test
             RuleFor(x => x.CourseID).NotEmpty();
         }
     }
+
+
+
     class Program
     {
         static void Main(string[] args)
@@ -35,7 +38,7 @@ namespace BogusDataGenerator.Test
             var rule3 = new BogusGenerator<Course>()
                   .StrictMode()
                   .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
-                  .RuleForProperty(x => x.Departments, null)
+                  .RuleForProperty(x => x.Departments, rule2, 1)
                   .RuleForType(x => 100)
                   .AddRuleSet(rule1, rule2)
                   .Store()
