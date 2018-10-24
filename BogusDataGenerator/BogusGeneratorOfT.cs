@@ -11,19 +11,11 @@ using System.Text;
 
 namespace BogusDataGenerator
 {
-    public class BogusGenerator<T>
-        where T : class, new()
+    public class BogusGenerator<T> where T : class, new()
     {
         private RuleSet _ruleSet;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
-
-        internal string GetVariableName(Type type, string propertyName = "")
-        {
-            var variable = (typeof(T).Namespace + typeof(T).Name + propertyName).Replace(".", "");
-            return variable.Camelize();
-        }
-
         public BogusGenerator()
         {
             _ruleSet = new RuleSet
@@ -31,9 +23,13 @@ namespace BogusDataGenerator
                 VariableName = GetVariableName(typeof(T))
             };
         }
-
+        internal string GetVariableName(Type type, string propertyName = "")
+        {
+            var variable = (type.FullName + propertyName).Trim().Replace(".", "");
+            return variable.Camelize();
+        }
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
-            Expression<Func<Faker, T, TProperty>> setter, int repetition = 1)
+            Expression<Func<Faker, T, TProperty>> setter)
         {
             _ruleSet.PropertyRules.Add(new PropertyRule()
             {
@@ -42,20 +38,18 @@ namespace BogusDataGenerator
                 PropertyExpressionText = property.ToExpressionString(),
                 SetterExpressionText = setter.ToExpressionString(),
                 PropertyExpression = property,
-                SetterExpression = setter,
-                Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
+                SetterExpression = setter
             });
             return this;
         }
-
-
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property, RuleSet ruleSet, int repetition = 1)
         {
             _ruleSet.DependentRules.Add(new DependentRule()
             {
                 PropertyName = property.GetName(),
                 Repetition = repetition,
-                VariableName = ruleSet.VariableName,
+                UsedVariableName = ruleSet.VariableName,
+                VariableName = GetVariableName(typeof(T), property.GetName()),
                 RuleSet = ruleSet
             });
             if (!_ruleSet.RuleSets.Contains(ruleSet))
@@ -64,21 +58,18 @@ namespace BogusDataGenerator
             }
             return this;
         }
-
-        public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter, int repetition = 1)
+        public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter)
         {
             _ruleSet.TypeRules.Add(new TypeRule
             {
                 TypeName = typeof(U).ToString(),
                 SetterExpressionText = setter.ToExpressionString(),
                 SetterExpression = setter,
-                Locales = null,
-                Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
+                Locales = null
             });
             return this;
         }
-
-        public BogusGenerator<T> RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter, int repetition = 1)
+        public BogusGenerator<T> RuleForConditionalProperty<TProperty>(Func<string, bool> condition, Expression<Func<Faker, T, TProperty>> setter)
         {
             var props = typeof(T).GetProperties().Select(x => x.Name).ToList();
             foreach (var prop in props)
@@ -93,8 +84,7 @@ namespace BogusDataGenerator
                         SetterExpressionText = setter.ToExpressionString(),
                         SetterExpression = setter,
                         Locales = null,
-                        Condition = condition,
-                        Repetition = typeof(T).IsAcceptableCollection() ? repetition : 1
+                        Condition = condition
                     });
                 }
             }
@@ -123,8 +113,6 @@ namespace BogusDataGenerator
             }
             return this;
         }
-
-
 
         public RuleSet Store()
         {
@@ -157,14 +145,16 @@ namespace BogusDataGenerator
 
 
 
-        private SourceResult BogusCreator(Type type, string variableName = null, List<string> namespaces = null, List<string> assemblies = null)
+        private SourceResult BogusCreator(Type type, string variableName = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
         {
             var sb = new StringBuilder();
+            if (variables == null)
+                variables = new List<string>();
             if (namespaces == null)
                 namespaces = new List<string>();
             if (assemblies == null)
                 assemblies = new List<string>();
-            var name = variableName ?? type.Name.Camelize();
+            var name = variableName ?? GetVariableName(type);
             var className = type.Name;
             sb.AppendLine($"var {name} = new Faker<{className}>()");
             if (_ruleSet.IsStrictMode)
@@ -183,36 +173,60 @@ namespace BogusDataGenerator
 
                 if (innerType.Status == TypeStatus.Class)
                 {
-                    var varName = GetVariableName(innerType.Type, innerType.Name);
-                    var anotherFaker = BogusCreator(innerType.Type, varName, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
+                    var varName = innerType.Name.Camelize();
+                    variables.Add(varName);
+                    var anotherFaker = BogusCreator(innerType.Type, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
                     sb.Prepend(anotherFaker);
                     sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate())", 1);
                 }
 
                 if (innerType.Status == TypeStatus.Enumerable || innerType.Status == TypeStatus.Collection)
                 {
-                    var varName = GetVariableName(innerType.Type, innerType.Name);
-                    var singularVariableName = varName.Singularize(false);
-                    var itemType = innerType.Type.GetGenericArguments()[0];
-                    var anotherFaker = BogusCreator(itemType, varName, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
-                    sb.Prepend(anotherFaker);
+                    var varName = (innerType.Parent + innerType.Name).Trim().Replace(".", "").Camelize();
+                    var isUsedVar = depVars.FirstOrDefault(x => x.VariableName == varName);
+                    if (isUsedVar != null)
+                    {
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {isUsedVar.UsedVariableName}.Generate(100).ToList())", 1);
+                    }
+                    else
+                    {
+                        variables.Add(varName);
+                        var itemType = innerType.Type.GetGenericArguments()[0];
+                        var anotherFaker = BogusCreator(itemType, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
+                        sb.Prepend(anotherFaker);
 
-                    sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToList())", 1);
-
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToList())", 1);
+                    }
                 }
                 if (innerType.Status == TypeStatus.Array)
                 {
-                    var varName = GetVariableName(innerType.Type, innerType.Name);
-                    var singularVariableName = varName.Singularize(false);
-                    var key = typeof(T).FullName + "-" + innerType.Name + "-" + innerType.Type;
-
-                    var elementType = innerType.Type.GetElementType();
-                    sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToArray())", 1);
-
+                    var varName = (innerType.Parent + innerType.Name).Trim().Replace(".", "").Camelize();
+                    var isUsedVar = depVars.FirstOrDefault(x => x.VariableName == varName);
+                    if (isUsedVar != null)
+                    {
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {isUsedVar.UsedVariableName}.Generate(100).ToArray())", 1);
+                    }
+                    else
+                    {
+                        variables.Add(varName);
+                        var elementType = innerType.Type.GetElementType();
+                        var anotherFaker = BogusCreator(elementType, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
+                        sb.Prepend(anotherFaker);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate(100).ToArray())", 1);
+                    }
                 }
-                else
+
+                foreach (var propRule in _ruleSet.PropertyRules)
                 {
-                    foreach (var propRule in _ruleSet.PropertyRules)
+                    if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
+                    {
+                        sb.AppendLine($".RuleFor({propRule.PropertyExpressionText}, {propRule.SetterExpressionText})", 1);
+                        processed.Add(innerType.UniqueId);
+                    }
+                }
+                foreach (var predefinedRules in _ruleSet.RuleSets)
+                {
+                    foreach (var propRule in predefinedRules.PropertyRules)
                     {
                         if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
                         {
@@ -220,42 +234,45 @@ namespace BogusDataGenerator
                             processed.Add(innerType.UniqueId);
                         }
                     }
-                    foreach (var rule in _ruleSet.RuleSets)
+                }
+                foreach (var conditionalPropRule in _ruleSet.ConditionalPropertyRules)
+                {
+                    var status = conditionalPropRule.Condition(innerType.Name);
+                    if (status && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
                     {
-                        foreach (var propRule in rule.PropertyRules)
-                        {
-                            if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
-                            {
-                                sb.AppendLine($".RuleFor({propRule.PropertyExpressionText}, {propRule.SetterExpressionText})", 1);
-                                processed.Add(innerType.UniqueId);
-                            }
-                        }
+                        sb.AppendLine($".RuleFor({conditionalPropRule.PropertyExpressionText}, {conditionalPropRule.SetterExpressionText})", 1);
+                        processed.Add(innerType.UniqueId);
                     }
-                    foreach (var conditionalPropRule in _ruleSet.ConditionalPropertyRules)
+                }
+                foreach (var predefinedRules in _ruleSet.RuleSets)
+                {
+                    foreach (var conditionalPropRule in predefinedRules.ConditionalPropertyRules)
                     {
                         var status = conditionalPropRule.Condition(innerType.Name);
                         if (status && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
                         {
-                            sb.AppendLine($".RuleFor({conditionalPropRule.PropertyExpressionText}, {conditionalPropRule.SetterExpressionText})", 1);
+                            var prop = conditionalPropRule.PropertyExpressionText == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpressionText;
+
+
+                            sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.SetterExpressionText})", 1);
                             processed.Add(innerType.UniqueId);
                         }
                     }
-                    foreach (var rule in _ruleSet.RuleSets)
+                }
+                foreach (var typeRule in _ruleSet.TypeRules)
+                {
+                    if (!processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(typeRule.Locales))
                     {
-                        foreach (var conditionalPropRule in rule.ConditionalPropertyRules)
+                        if (typeRule.TypeName == innerType.TypeName)
                         {
-                            var status = conditionalPropRule.Condition(innerType.Name);
-                            if (status && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
-                            {
-                                var prop = conditionalPropRule.PropertyExpressionText == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpressionText;
-
-
-                                sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.SetterExpressionText})", 1);
-                                processed.Add(innerType.UniqueId);
-                            }
+                            sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, {typeRule.SetterExpressionText})", 1);
+                            processed.Add(innerType.UniqueId);
                         }
                     }
-                    foreach (var typeRule in _ruleSet.TypeRules)
+                }
+                foreach (var predefinedRules in _ruleSet.RuleSets)
+                {
+                    foreach (var typeRule in predefinedRules.TypeRules)
                     {
                         if (!processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(typeRule.Locales))
                         {
@@ -266,21 +283,8 @@ namespace BogusDataGenerator
                             }
                         }
                     }
-                    foreach (var rule in _ruleSet.RuleSets)
-                    {
-                        foreach (var typeRule in rule.TypeRules)
-                        {
-                            if (!processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(typeRule.Locales))
-                            {
-                                if (typeRule.TypeName == innerType.TypeName)
-                                {
-                                    sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, {typeRule.SetterExpressionText})", 1);
-                                    processed.Add(innerType.UniqueId);
-                                }
-                            }
-                        }
-                    }
                 }
+
             }
             Namespaces = namespaces;
             Assemblies = assemblies;
