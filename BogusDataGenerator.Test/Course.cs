@@ -9,7 +9,7 @@ namespace BogusDataGenerator.Test
         public string Credits { get; set; }
         public int DepartmentID { get; set; }	       
         public virtual Department Department { get; set; }	       
-        public virtual ICollection<Department> Departments { get; set; }
+        public virtual Department[] Departments { get; set; }
 
     }
 }
