@@ -29,9 +29,9 @@ namespace BogusDataGenerator.Test
                 ;
 
             var rule2 = new BogusGenerator<Department>()
-                .RuleForProperty(x => x.Budget, (u, v) => u.Random.Decimal(60, 55555))
+                .RuleForProperty(x => x.Rank, (u, v) => u.Random.Decimal(60, 55555))
                 .RuleForProperty(x => x.Administrator, (u, v) => 0)
-                .RuleForProperty(x => x.Phones, (u, v) => new int[] { 1, 2, 3, 4, 5 })
+                .RuleForProperty(x => x.Phones, (u, v) => new string[] { "1", "2", "3", "4", "5" })
                 .Save()
                 ;
 
