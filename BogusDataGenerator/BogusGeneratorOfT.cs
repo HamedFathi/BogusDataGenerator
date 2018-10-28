@@ -180,7 +180,7 @@ namespace BogusDataGenerator
                     var isUsedVar = depVars.FirstOrDefault(x => x.VariableName == varName);
                     if (isUsedVar != null)
                     {
-                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {isUsedVar.UsedVariableName}.Generate(100).ToList())", 1);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {isUsedVar.UsedVariableName}.Generate({isUsedVar.Repetition}).ToList())", 1);
                     }
                     if (props.Contains(varName))
                     {
