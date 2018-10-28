@@ -238,7 +238,7 @@ namespace BogusDataGenerator
                             {
                                 if (innerType.Name == propRule.Name && !processed.Contains(innerType.UniqueId))
                                 {
-                                    var exp = "";
+                                    /*var exp = "";
                                     if (innerType.TypeName.Contains("[]"))
                                     {
                                         exp = propRule.SetterExpression.ToString();
@@ -246,8 +246,8 @@ namespace BogusDataGenerator
                                     else
                                     {
                                         exp = propRule.SetterExpressionText;
-                                    }
-                                    sb.AppendLine($".RuleFor({propRule.PropertyExpressionText}, {exp})", 1);
+                                    }*/
+                                    sb.AppendLine($".RuleFor({propRule.PropertyExpressionText}, {/*exp*/propRule.SetterExpression.ToString()})", 1);
                                     processed.Add(innerType.UniqueId);
                                 }
                             }
