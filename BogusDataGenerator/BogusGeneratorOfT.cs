@@ -20,7 +20,8 @@ namespace BogusDataGenerator
         {
             _ruleSet = new RuleSet
             {
-                VariableName = typeof(T).Name.Camelize()
+                VariableName = typeof(T).Name.Camelize(),
+                Type = typeof(T)
             };
         }
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
@@ -109,7 +110,7 @@ namespace BogusDataGenerator
             return this;
         }
 
-        public RuleSet Store()
+        public RuleSet Save()
         {
             return _ruleSet;
         }
@@ -119,7 +120,7 @@ namespace BogusDataGenerator
         // All ConditionalPropertyRuleFor
         // All TypeRuleFor
 
-        public string Text()
+        public override string ToString()
         {
             var sb = new StringBuilder();
             if (_ruleSet.TextBefore.Count > 0)
@@ -138,9 +139,7 @@ namespace BogusDataGenerator
             return sb.ToString();
         }
 
-
-
-        private SourceResult BogusCreator(Type type, string variableName = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
+        internal SourceResult BogusCreator(Type type, string variableName = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
         {
             var sb = new StringBuilder();
             if (variables == null)
@@ -347,7 +346,7 @@ namespace BogusDataGenerator
             var variableName = name.Camelize();
             var className = $"{name}TestData";
             var bogusGenerator = new BogusGenerator<T>().AddRuleSet(ruleSet);
-            var fakerSource = bogusGenerator.Text();
+            var fakerSource = bogusGenerator.ToString();
             var assemblies = bogusGenerator.Assemblies.Distinct().ToList();
             assemblies.Add(typeof(Faker<>).Assembly.Location);
             var namespaces = bogusGenerator.Namespaces.Select(x => "using " + x + ";").Aggregate((a, b) => a + Environment.NewLine + b);

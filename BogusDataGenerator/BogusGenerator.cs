@@ -57,7 +57,7 @@ namespace BogusDataGenerator
 
 
 
-        public RuleSet Store()
+        public RuleSet Save()
         {
             return _ruleSet;
         }

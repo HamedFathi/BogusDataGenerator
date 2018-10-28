@@ -25,27 +25,27 @@ namespace BogusDataGenerator.Test
                 .RuleForType<string>(x => "HERE")
                 .RuleForType<DateTime>(x => DateTime.Now)
                 .RuleForType<int>(x => x.Random.Int(400, 40000))
-                .Store()
+                .Save()
                 ;
+
             var rule2 = new BogusGenerator<Department>()
                 .RuleForProperty(x => x.Budget, (u, v) => u.Random.Decimal(60, 55555))
                 .RuleForProperty(x => x.Administrator, (u, v) => 0)
-                .RuleForProperty(x => x.Phones, (u, v) => new int[] { 1 })
-
-                .Store()
+                .RuleForProperty(x => x.Phones, (u, v) => new int[] { 1, 2, 3, 4, 5 })
+                .Save()
                 ;
 
             var rule3 = new BogusGenerator<Course>()
-                  .StrictMode()
-                  .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
-                  .RuleForProperty(x => x.Departments, rule2, 1)
-                  .RuleForType(x => 100)
-                  .AddRuleSet(rule1, rule2)
-                  .Store()
-              ;
+                .StrictMode()
+                .RuleForProperty(x => x.CourseID, (u, v) => u.UniqueIndex)
+                .RuleForProperty(x => x.Departments, rule2, 1)
+                .RuleForType(x => 100)
+                .AddRuleSet(rule1, rule2)
+                .Save()
+                ;
 
             var courses = new BogusGenerator<Course>().AutoFaker(200, rule1, rule2, rule3);
-            Console.WriteLine(new BogusGenerator<Course>().AddRuleSet(rule1, rule2, rule3).Text());
+            Console.WriteLine(new BogusGenerator<Course>().AddRuleSet(rule1, rule2, rule3).ToString());
             var courses2 = new BogusGenerator<Course>().AutoFaker(1000, rule1, rule2, rule3);
             var validator = new CourseValidator();
             FluentValidation.Results.ValidationResult results = validator.Validate(courses[0]);

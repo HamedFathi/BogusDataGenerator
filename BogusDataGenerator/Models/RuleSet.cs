@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace BogusDataGenerator.Models
 {
@@ -16,6 +17,7 @@ namespace BogusDataGenerator.Models
             DependentRules = new List<DependentRule>();
         }
 
+        public Type Type { get; set; }
         public string VariableName { get; set; }
         public bool IsStrictMode { get; set; } = false;
         public List<PropertyRule> PropertyRules { get; set; }
@@ -27,6 +29,5 @@ namespace BogusDataGenerator.Models
         public List<string> TextAfter { get; set; }
         public List<RuleSet> RuleSets { get; set; }
         public string[] Locales { get; set; } = null;
-
     }
 }
