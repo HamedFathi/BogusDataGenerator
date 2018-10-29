@@ -18,7 +18,7 @@ namespace BogusDataGenerator.Extensions
         public static List<InnerTypeResult> GetInnerTypes(this Type type, params Type[] predefinedTypes)
         {
             var id = type.FullName + "-" + type.GetHashCode();
-            var result = Cache.CacheManager.Instance.GetOrSet<List<InnerTypeResult>>(id, GetInnerTypesInfo(type, 0, "", predefinedTypes));
+            var result = Cache.CacheManager.Instance.GetOrSet<List<InnerTypeResult>>(id, GetInnerTypesInfo(type, null, 0, "", predefinedTypes));
             return result;
         }
         public static List<InnerTypeResult> Sort(this List<InnerTypeResult> innerTypeResults, SortType sortType)
@@ -122,8 +122,12 @@ namespace BogusDataGenerator.Extensions
             }
             return count;
         }
-        private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, int prevLevel = 0, string propertyName = "", params Type[] predefinedTypes)
+        private static List<InnerTypeResult> GetInnerTypesInfo(this Type type, List<string> processedTypes, int prevLevel = 0, string propertyName = "", params Type[] predefinedTypes)
         {
+            if (processedTypes == null)
+            {
+                processedTypes = new List<string>();
+            }
             int level = prevLevel;
             var typeList = new List<InnerTypeResult>();
             var isSimpleType = type.IsSimpleType(predefinedTypes); // Simple types no need any investigation.
@@ -142,11 +146,11 @@ namespace BogusDataGenerator.Extensions
                         level = prevLevel + 1;
                         Type keyType = type.GetGenericArguments()[0];
                         typeList.Add(new InnerTypeResult() { Type = keyType, Level = level, Name = propertyName, Status = TypeStatus.DictionaryKey });
-                        typeList.AddRange(GetInnerTypesInfo(keyType, level, propertyName, predefinedTypes));
+                        typeList.AddRange(GetInnerTypesInfo(keyType, processedTypes, level, propertyName, predefinedTypes));
 
                         Type valueType = type.GetGenericArguments()[1];
                         typeList.Add(new InnerTypeResult() { Type = valueType, Level = level, Name = propertyName, Status = TypeStatus.DictionaryValue });
-                        typeList.AddRange(GetInnerTypesInfo(valueType, level, propertyName, predefinedTypes));
+                        typeList.AddRange(GetInnerTypesInfo(valueType, processedTypes, level, propertyName, predefinedTypes));
                     }
                     if ((type.IsEnumerable() || type.IsCollection()) && !type.IsDictionary())
                     {
@@ -154,7 +158,7 @@ namespace BogusDataGenerator.Extensions
                         Type itemType = type.GetGenericArguments()[0];
                         propertyName = string.IsNullOrEmpty(propertyName) ? itemType.Name : propertyName;
                         typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Enumerable });
-                        typeList.AddRange(GetInnerTypesInfo(itemType, level, propertyName, predefinedTypes));
+                        typeList.AddRange(GetInnerTypesInfo(itemType, processedTypes, level, propertyName, predefinedTypes));
                     }
                     if (type.IsTuple())
                     {
@@ -163,7 +167,7 @@ namespace BogusDataGenerator.Extensions
                         foreach (var arg in tupleArgs)
                         {
                             typeList.Add(new InnerTypeResult() { Type = arg, Level = level, Name = propertyName, Status = TypeStatus.TupleArgument });
-                            typeList.AddRange(GetInnerTypesInfo(arg, level, propertyName, predefinedTypes));
+                            typeList.AddRange(GetInnerTypesInfo(arg, processedTypes, level, propertyName, predefinedTypes));
                         }
                     }
                 }
@@ -175,13 +179,13 @@ namespace BogusDataGenerator.Extensions
                         level = prevLevel + 1;
                         propertyName = string.IsNullOrEmpty(propertyName) ? elementType.Name : propertyName;
                         typeList.Add(new InnerTypeResult() { Type = elementType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.ArrayElement });
-                        typeList.AddRange(GetInnerTypesInfo(elementType, level, propertyName, predefinedTypes));
+                        typeList.AddRange(GetInnerTypesInfo(elementType, processedTypes, level, propertyName, predefinedTypes));
                     }
                     if (type.IsInterface) // I am not sure!
                     {
                         // TODO
                     }
-                    if (type.IsClassOnly())
+                    if (type.IsClassOnly() && !processedTypes.Contains(type.FullName))
                     {
                         level = prevLevel + 1;
                         var result = type.GetProperties().Select(x => new InnerTypeResult()
@@ -194,9 +198,11 @@ namespace BogusDataGenerator.Extensions
                         })
                             .ToList();
                         typeList.AddRange(result);
+                        processedTypes.Add(type.FullName);
                         foreach (var currentResult in result)
                         {
-                            typeList.AddRange(GetInnerTypesInfo(currentResult.Type, level, currentResult.Name, predefinedTypes));
+                            if (!processedTypes.Contains(currentResult.Type.FullName))
+                                typeList.AddRange(GetInnerTypesInfo(currentResult.Type, processedTypes, level, currentResult.Name, predefinedTypes));
                         }
                     }
                 }

@@ -157,11 +157,13 @@ namespace BogusDataGenerator
             return sb.ToString();
         }
 
-        internal SourceResult BogusCreator(Type type, string variableName = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
+        internal SourceResult BogusCreator(Type type, string variableName = null, List<string> processedTypes = null, List<string> variables = null, List<string> namespaces = null, List<string> assemblies = null)
         {
             var sb = new StringBuilder();
             if (variables == null)
                 variables = new List<string>();
+            if (processedTypes == null)
+                processedTypes = new List<string>();
             if (namespaces == null)
                 namespaces = new List<string>();
             if (assemblies == null)
@@ -185,12 +187,18 @@ namespace BogusDataGenerator
             var props = _ruleSet.RuleSets.SelectMany(x => x.PropertyRules).Select(y => y.Name.Trim().Replace(".", "").Camelize());
             foreach (var innerType in innerTypes)
             {
-
                 if (innerType.Status == TypeStatus.Class)
                 {
+                    var fullName = innerType.Type.FullName;
+                    if (processedTypes.Contains(fullName))
+                    {
+                        break;
+                    }
+
+                    processedTypes.Add(fullName);
                     var varName = innerType.Name.Trim().Replace(".", "").Camelize();
                     variables.Add(varName);
-                    var anotherFaker = BogusCreator(innerType.Type, varName, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
+                    var anotherFaker = BogusCreator(innerType.Type, varName, processedTypes, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
                     sb.Prepend(anotherFaker);
                     sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName}.Generate())", 1);
                 }
