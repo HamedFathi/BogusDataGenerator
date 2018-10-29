@@ -19,7 +19,6 @@ namespace BogusDataGenerator.Test
     {
         static void Main(string[] args)
         {
-
             var rule1 = new BogusGenerator()
                 .RuleForConditionalProperty(x => x.Contains("Credit"), y => "Hello", new[] { "en" })
                 .RuleForConditionalProperty(x => x.Contains("Credit"), y => "Hello", new[] { "kr", "en" })

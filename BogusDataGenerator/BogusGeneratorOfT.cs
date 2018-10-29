@@ -14,6 +14,7 @@ namespace BogusDataGenerator
     public class BogusGenerator<T> where T : class, new()
     {
         private RuleSet _ruleSet;
+        private Expression<Func<Faker, T>> _customInstantiator = null;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
         public BogusGenerator()
@@ -24,6 +25,14 @@ namespace BogusDataGenerator
                 Type = typeof(T)
             };
         }
+
+        public BogusGenerator<T> CustomInstantiator(Expression<Func<Faker, T>> factoryMethod)
+        {
+            _customInstantiator = factoryMethod;
+            return this;
+        }
+
+
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
             Expression<Func<Faker, T, TProperty>> setter)
         {
@@ -155,7 +164,10 @@ namespace BogusDataGenerator
                 sb.AppendLine(".StrictMode(true)", 1);
             else
                 sb.AppendLine(".StrictMode(false)", 1);
-
+            if (_customInstantiator != null)
+            {
+                sb.AppendLine($".CustomInstantiator({_customInstantiator.ToExpressionString()})", 1);
+            }
             var processed = new List<string>();
             var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null && x.Parent == type.FullName).ToList();
             namespaces.AddRange(innerTypes.Select(s => s.TypeNamespace));
