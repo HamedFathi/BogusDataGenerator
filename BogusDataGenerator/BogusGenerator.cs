@@ -39,6 +39,25 @@ namespace BogusDataGenerator
                 SetterExpressionText = setter.ToExpressionString(),
                 Locales = locales,
                 Condition = condition,
+                ConditionByType = null,
+                Repetition = repetition
+            });
+            return this;
+        }
+
+        public BogusGenerator RuleForConditionalProperty<TProperty>(Func<string, Type, bool> condition, Expression<Func<Faker, TProperty>> setter, string[] locales = null, int repetition = 1)
+        {
+            var setterExp = setter.ToExpressionString(); ;
+            _ruleSet.ConditionalPropertyRules.Add(new ConditionalPropertyRule
+            {
+                TypeName = null,
+                PropertyExpressionText = null,
+                PropertyExpression = null,
+                SetterExpression = setter,
+                SetterExpressionText = setter.ToExpressionString(),
+                Locales = locales,
+                Condition = null,
+                ConditionByType = condition,
                 Repetition = repetition
             });
             return this;

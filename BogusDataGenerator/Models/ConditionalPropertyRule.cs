@@ -13,6 +13,8 @@ namespace BogusDataGenerator.Models
         public LambdaExpression SetterExpression { get; set; }
 
         public Func<string, bool> Condition { get; set; }
+        public Func<string, Type, bool> ConditionByType { get; set; }
+
         public string[] Locales { get; set; }
         public int Repetition { get; set; }
 

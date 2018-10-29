@@ -21,7 +21,9 @@ namespace BogusDataGenerator.Test
         {
 
             var rule1 = new BogusGenerator()
+                .RuleForConditionalProperty(x => x.Contains("Credit"), y => "Hello", new[] { "en" })
                 .RuleForConditionalProperty(x => x.Contains("Credit"), y => "Hello", new[] { "kr", "en" })
+                .RuleForConditionalProperty((x, y) => x.Contains("Rank") && y == typeof(double), y => 0.1, new[] { "en" })
                 .RuleForType<string>(x => "HERE")
                 .RuleForType<DateTime>(x => DateTime.Now)
                 .RuleForType<int>(x => x.Random.Int(400, 40000))
@@ -41,6 +43,7 @@ namespace BogusDataGenerator.Test
                 .RuleForProperty(x => x.Departments, rule2, 50)
                 .RuleForType(x => 100)
                 .AddRuleSet(rule1, rule2)
+                .UseLocales("en")
                 .Save()
                 ;
 

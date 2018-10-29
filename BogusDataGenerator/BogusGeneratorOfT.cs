@@ -92,7 +92,7 @@ namespace BogusDataGenerator
             return this;
         }
 
-        public BogusGenerator<T> UseLocales(string[] locales = null)
+        public BogusGenerator<T> UseLocales(params string[] locales)
         {
             _ruleSet.Locales = locales;
             return this;
@@ -285,10 +285,19 @@ namespace BogusDataGenerator
                     }
                     foreach (var conditionalPropRule in _ruleSet.ConditionalPropertyRules)
                     {
-                        var status = conditionalPropRule.Condition(innerType.Name);
+                        var status = conditionalPropRule.Condition == null ? false : conditionalPropRule.Condition(innerType.Name);
                         if (status && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
                         {
                             sb.AppendLine($".RuleFor({conditionalPropRule.PropertyExpressionText}, {conditionalPropRule.SetterExpressionText})", 1);
+                            processed.Add(innerType.UniqueId);
+                        }
+                        var typeStatus = conditionalPropRule.ConditionByType == null ? false : conditionalPropRule.ConditionByType(innerType.Name, innerType.Type);
+                        if (typeStatus && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
+                        {
+                            var prop = conditionalPropRule.PropertyExpressionText == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpressionText;
+
+
+                            sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.SetterExpressionText})", 1);
                             processed.Add(innerType.UniqueId);
                         }
                     }
@@ -296,8 +305,17 @@ namespace BogusDataGenerator
                     {
                         foreach (var conditionalPropRule in rule.ConditionalPropertyRules)
                         {
-                            var status = conditionalPropRule.Condition(innerType.Name);
+                            var status = conditionalPropRule.Condition == null ? false : conditionalPropRule.Condition(innerType.Name);
                             if (status && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
+                            {
+                                var prop = conditionalPropRule.PropertyExpressionText == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpressionText;
+
+
+                                sb.AppendLine($".RuleFor({prop}, {conditionalPropRule.SetterExpressionText})", 1);
+                                processed.Add(innerType.UniqueId);
+                            }
+                            var typeStatus = conditionalPropRule.ConditionByType == null ? false : conditionalPropRule.ConditionByType(innerType.Name, innerType.Type);
+                            if (typeStatus && !processed.Contains(innerType.UniqueId) && _ruleSet.Locales.ContainsOneOf(conditionalPropRule.Locales))
                             {
                                 var prop = conditionalPropRule.PropertyExpressionText == null ? $"(x) => x.{innerType.Name}" : conditionalPropRule.PropertyExpressionText;
 
