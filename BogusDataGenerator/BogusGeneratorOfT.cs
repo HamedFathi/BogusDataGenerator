@@ -11,12 +11,22 @@ using System.Text;
 
 namespace BogusDataGenerator
 {
-    public class BogusGenerator<T> where T : class, new()
+
+    public static class FakerExtensions
+    {
+        public static BogusGeneratorVariable UseBogusGenerator(this Faker faker, Type type)
+        {
+            return new BogusGeneratorVariable { VariableName = type.Name.Camelize() };
+        }
+    }
+    public class BogusGenerator<T>
+        where T : class, new()
     {
         private RuleSet _ruleSet;
         private Expression<Func<Faker, T>> _customInstantiator = null;
         internal List<string> Namespaces { get; private set; }
         internal List<string> Assemblies { get; private set; }
+
         public BogusGenerator()
         {
             _ruleSet = new RuleSet
@@ -32,7 +42,6 @@ namespace BogusDataGenerator
             return this;
         }
 
-
         public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property,
             Expression<Func<Faker, T, TProperty>> setter)
         {
@@ -47,20 +56,20 @@ namespace BogusDataGenerator
             });
             return this;
         }
-        public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property, RuleSet ruleSet, int repetition = 1)
+        public BogusGenerator<T> RuleForProperty<TProperty>(Expression<Func<T, TProperty>> property, Func<Faker, BogusGeneratorVariable> relatedBogusGenerator, int repetition = 1)
         {
             _ruleSet.DependentRules.Add(new DependentRule()
             {
                 PropertyName = property.GetName(),
                 Repetition = repetition,
-                UsedVariableName = ruleSet.VariableName,
+                UsedVariableName = relatedBogusGenerator(new Faker()).VariableName,
                 VariableName = property.GetName().Camelize(),
-                RuleSet = ruleSet
+                // RuleSet = ruleSet
             });
-            if (!_ruleSet.RuleSets.Contains(ruleSet))
+            /*if (!_ruleSet.RuleSets.Contains(ruleSet))
             {
                 _ruleSet.RuleSets.Add(ruleSet);
-            }
+            }*/
             return this;
         }
         public BogusGenerator<T> RuleForType<U>(Expression<Func<Faker, U>> setter)

@@ -7,6 +7,6 @@
         public string UsedVariableName { get; set; }
 
         public int Repetition { get; set; }
-        public RuleSet RuleSet { get; set; }
+        // public RuleSet RuleSet { get; set; }
     }
 }
