@@ -199,7 +199,8 @@ namespace BogusDataGenerator.Extensions
                             .ToList();
                         typeList.AddRange(result);
                         processedTypes.Add(type.FullName);
-                        foreach (var currentResult in result)
+                        var newResult = result.Where(x => x.Type != type).ToList();
+                        foreach (var currentResult in newResult)
                         {
                             if (!processedTypes.Contains(currentResult.Type.FullName))
                                 typeList.AddRange(GetInnerTypesInfo(currentResult.Type, processedTypes, level, currentResult.Name, predefinedTypes));

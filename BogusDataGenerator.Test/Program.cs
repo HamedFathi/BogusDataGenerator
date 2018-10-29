@@ -56,8 +56,11 @@ namespace BogusDataGenerator.Test
                 .RuleForProperty(x => x.Subordinates, y => y.UseBogusGenerator(typeof(Employee)), 150)
                 .Save();
 
+            var addressRule = new BogusGenerator<Address>()
+                .RuleForProperty(x => x.City, (u, v) => u.Address.City())
+                .Save();
 
-            var data = new BogusGenerator<Employee>().AutoFaker(1000, employeeRule, humanRule, departmentRule, generalRules);
+            var data = new BogusGenerator<Employee>().AutoFaker(1000, employeeRule,addressRule, humanRule, departmentRule,  generalRules);
 
 
             /*var rule1 = new BogusGenerator()

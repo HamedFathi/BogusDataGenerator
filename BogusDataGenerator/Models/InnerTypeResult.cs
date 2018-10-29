@@ -8,7 +8,7 @@ namespace BogusDataGenerator.Models
     {
         public string UniqueId
         {
-            get { return $"{Level}-{Name}-{FriendlyTypeName}"; }
+            get { return $"{Level}-{Name}-{Type.FullName}"; }
         }
 
         public int Level { get; set; }
@@ -41,31 +41,6 @@ namespace BogusDataGenerator.Models
                     return Type.FullName;
                 else
                     return Type.GetFullName();
-            }
-        }
-        public string FriendlyTypeName
-        {
-            get
-            {
-                var friendlyTypeName = "";
-                var isNullable = Type.ToString().StartsWith("System.Nullable`1[");
-                var isArray = Type.ToString().EndsWith("[]");
-                if (isNullable)
-                {
-                    var newName = Type.ToString().Replace("System.Nullable`1[", "").Replace("]", "");
-                    friendlyTypeName = newName.GetFriendlyTypeName() + "?";
-                }
-                else if (isArray)
-                {
-                    var newName = Type.ToString().Replace("[]", "");
-                    var count = Type.ToString().CountOfSubstring("[]");
-                    friendlyTypeName = newName.GetFriendlyTypeName() + "[]".Repeat(count);
-                }
-                else
-                {
-                    friendlyTypeName = Type.GetFriendlyTypeName();
-                }
-                return friendlyTypeName == null ? TypeName : friendlyTypeName;
             }
         }
 

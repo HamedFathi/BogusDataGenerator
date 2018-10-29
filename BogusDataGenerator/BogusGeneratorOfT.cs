@@ -180,7 +180,7 @@ namespace BogusDataGenerator
                 sb.AppendLine($".CustomInstantiator({_customInstantiator.ToExpressionString()})", 1);
             }
             var processed = new List<string>();
-            var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null && x.Parent == type.FullName).ToList();
+            var innerTypes = type.GetInnerTypes().ToList();
             namespaces.AddRange(innerTypes.Select(s => s.TypeNamespace));
             assemblies.AddRange(innerTypes.Select(s => s.Location));
             var depVars = _ruleSet.RuleSets.SelectMany(x => x.DependentRules).ToList();
