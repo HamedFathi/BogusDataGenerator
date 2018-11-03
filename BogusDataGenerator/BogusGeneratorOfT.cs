@@ -180,7 +180,7 @@ namespace BogusDataGenerator
                 sb.AppendLine($".CustomInstantiator({_customInstantiator.ToExpressionString()})", 1);
             }
             var processed = new List<string>();
-            var innerTypes = type.GetInnerTypes().ToList();
+            var innerTypes = type.GetInnerTypes().Where(x => x.Parent != null && x.Parent == type.FullName).ToList();
             namespaces.AddRange(innerTypes.Select(s => s.TypeNamespace));
             assemblies.AddRange(innerTypes.Select(s => s.Location));
             var depVars = _ruleSet.RuleSets.SelectMany(x => x.DependentRules).ToList();
@@ -206,6 +206,16 @@ namespace BogusDataGenerator
                 if (innerType.Status == TypeStatus.Enumerable || innerType.Status == TypeStatus.Collection)
                 {
                     var varName = innerType.Name.Trim().Replace(".", "").Camelize();
+                    var argType = innerType.Type.GetGenericArguments()[0];
+                    var itemTypeText = argType.FullName;
+                    var itemTypeStatus = argType.IsClass;
+                    if (!processedTypes.Contains(itemTypeText) && itemTypeStatus)
+                    {
+                        variables.Add(varName.Singularize(false));
+                        var anotherFaker = BogusCreator(argType, varName.Singularize(false), processedTypes, variables, namespaces, assemblies).Source + new string('\t', 1) + ";" + Environment.NewLine;
+                        sb.Prepend(anotherFaker);
+                        sb.AppendLine($".RuleFor((x) => x.{innerType.Name}, (f) => {varName.Singularize(false)}.Generate(100))", 1);
+                    }
                     var isUsedVar = depVars.FirstOrDefault(x => x.VariableName == varName);
                     if (isUsedVar != null)
                     {

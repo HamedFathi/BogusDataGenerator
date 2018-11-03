@@ -157,7 +157,7 @@ namespace BogusDataGenerator.Extensions
                         level = prevLevel + 1;
                         Type itemType = type.GetGenericArguments()[0];
                         propertyName = string.IsNullOrEmpty(propertyName) ? itemType.Name : propertyName;
-                        typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = TypeStatus.Enumerable });
+                        typeList.Add(new InnerTypeResult() { Type = itemType, Level = level, Parent = type.ToString(), Name = propertyName, Status = GetTypeStatus(itemType) });
                         typeList.AddRange(GetInnerTypesInfo(itemType, processedTypes, level, propertyName, predefinedTypes));
                     }
                     if (type.IsTuple())
